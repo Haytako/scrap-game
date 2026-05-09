@@ -966,132 +966,210 @@ function aiPlay(){
   var h=G.hands.p2;
   if(h.length===0){G.passed.p2=true;afterPlay();return;}
 
-  // ===== STRATEGIC PASS LOGIC WITH ROUND AWARENESS =====
   var opPassed=G.passed.p1;
   var opCards=G.hands.p1.length;
   var myCards=h.length;
   var rnd=G.round;
-  var iMustWin=G.rw.p1>=2;       // opponent already has 2 round wins
-  var iMustLose=G.rw.p2>=2;       // AI already has 2 round wins (shouldnt happen)
-  var opWonR1=G.rw.p1>=1&&rnd===3;
-  var iWonR1=G.rw.p2>=1&&rnd===3;
+  var cardAdv=myCards-opCards;
+  var iWonR1=G.rw.p2>=1;
+  var iLostR1=G.rw.p1>=1;
 
-  // If opponent passed and I'm winning — pass too, don't waste cards
+  // ===== CARD VALUE SYSTEM =====
+  function cardValue(c){
+    if(!c)return 0;
+    var v=c.str||0;
+    if(c.ability==='hero')v+=6;
+    if(c.ability==='morale')v+=5;
+    if(c.ability==='medic')v+=5;
+    if(c.ability==='scorch')v+=4;
+    if(c.ability==='clear')v+=3;
+    if(c.ability==='weather')v+=3;
+    if(c.ability==='spy')v+=2;
+    var rows=['melee','ranged','siege'];
+    for(var ri=0;ri<3;ri++){
+      var r=rows[ri];
+      for(var ui=0;ui<G.field[r].p2.length;ui++){
+        var u=G.field[r].p2[ui];
+        if(u.name===c.name&&c.ability!=='hero')v+=c.str;
+      }
+    }
+    return v;
+  }
+
+  // ===== PASS STRATEGY =====
+
+  // 1. Opponent passed and I'm winning — take the round cheaply
   if(opPassed&&diff<0){
-    // I'm winning. In round 1, any win is fine. In round 3, secure the game.
-    if(rnd===1&&diff<=-3){G.passed.p2=true;afterPlay();return;}
-    if(rnd===2){
-      // If I won round 1, passing gives me the match
-      if(G.rw.p2>=1){G.passed.p2=true;afterPlay();return;}
-      // If I lost round 1, I must win round 2 — keep winning
-      if(diff<=-2){G.passed.p2=true;afterPlay();return;}
-    }
-    if(rnd===3){
-      // Final round — I'm winning, close it out
-      if(diff<=-1){G.passed.p2=true;afterPlay();return;}
-    }
+    if(rnd===1){G.passed.p2=true;afterPlay();return;}
+    if(rnd===2&&iWonR1){G.passed.p2=true;afterPlay();return;}
+    if(rnd===2&&iLostR1){G.passed.p2=true;afterPlay();return;}
+    if(rnd===3){G.passed.p2=true;afterPlay();return;}
   }
 
-  // Losing badly and opponent still has cards — consider cutting losses in round 1
-  if(rnd===1&&!opPassed&&diff>=25&&myCards<=2&&opCards>=3){
+  // 2. FOLD ROUND 1 — save cards for R2/R3 if losing
+  if(rnd===1&&!opPassed&&myCards<=2){
+    var bestCard=0;
+    for(var i=0;i<h.length;i++){var cv=cardValue(h[i]);if(cv>bestCard)bestCard=cv;}
+    if(diff-bestCard>=5){G.passed.p2=true;afterPlay();return;}
+  }
+  if(rnd===1&&!opPassed&&diff>=20&&myCards<=3&&opCards>=myCards){
     G.passed.p2=true;afterPlay();return;
   }
-  // Round 1: if losing by a lot with few cards, pass to save for rounds 2-3
-  if(rnd===1&&!opPassed&&diff>=20&&myCards<=3){
+  if(rnd===1&&!opPassed&&diff>=10&&cardAdv<=-2){
     G.passed.p2=true;afterPlay();return;
   }
-  // Round 2: if I won round 1, consider passing early to bleed opponent cards
-  if(rnd===2&&G.rw.p2>=1&&!opPassed&&diff>=10&&myCards<=2&&opCards>=4){
-    G.passed.p2=true;afterPlay();return;
+
+  // 3. ROUND 2 BLEED — won R1, can afford to lose R2 and drain opponent
+  if(rnd===2&&iWonR1&&!opPassed){
+    if(diff>=20&&myCards<=2&&opCards>=3){G.passed.p2=true;afterPlay();return;}
+    if(diff>=5&&myCards<=1&&opCards>=3){G.passed.p2=true;afterPlay();return;}
   }
-  // Round 2: if I lost round 1, fight harder but know when to fold
-  if(rnd===2&&G.rw.p1>=1&&!opPassed&&diff>=30&&myCards<=2){
-    G.passed.p2=true;afterPlay();return;
+
+  // 4. ROUND 2 FIGHT — lost R1, must win
+  if(rnd===2&&iLostR1&&!opPassed){
+    if(diff>=30&&myCards<=1&&opCards>=3){G.passed.p2=true;afterPlay();return;}
   }
-  // Round 3: fight to the death — no strategic passing when losing
-  // (only pass if out of cards, handled above)
+
+  // 5. ROUND 3 — FIGHT TO THE DEATH
 
   // ===== CARD SELECTION =====
   var ci=-1;
 
-  // Priority 1: Clear weather if it hurts me (especially if losing)
-  if(ci<0&&diff>=-5){
+  // Priority 1: Clear weather if hurting me
+  if(ci<0){
     var hurtF=G.weather.frost&&G.field.melee.p2.some(function(c){return c.ability!=='hero';});
     var hurtG=G.weather.fog&&G.field.ranged.p2.some(function(c){return c.ability!=='hero';});
     var hurtR=G.weather.rain&&G.field.siege.p2.some(function(c){return c.ability!=='hero';});
-    if(hurtF||hurtG||hurtR){ci=h.findIndex(function(c){return c.ability==='clear';});}
-  }
-
-  // Priority 2: Spy cards (draw 2) — great in round 1-2, risky in round 3
-  if(ci<0&&rnd<3){
-    ci=h.findIndex(function(c){return c.ability==='spy';});
-  }
-  // In round 3, only play spy if we have enough cards to benefit
-  if(ci<0&&rnd===3&&myCards>=4&&diff<0){
-    ci=h.findIndex(function(c){return c.ability==='spy';});
-  }
-
-  // Priority 3: Scorch if opponent has a high-power card
-  if(ci<0){
-    var mx=0;
-    for(var ri=0;ri<['melee','ranged','siege'].length;ri++){
-      var row=['melee','ranged','siege'][ri];
-      for(var fi=0;fi<G.field[row].p1.length;fi++){
-        var fc=G.field[row].p1[fi];var ep=effPow(fc,row);if(ep>mx)mx=ep;
+    if(hurtF||hurtG||hurtR){
+      var clIdx=h.findIndex(function(c){return c.ability==='clear';});
+      if(clIdx>=0){
+        if(rnd<3){ci=clIdx;}
+        else{
+          var lostP=0;
+          var allRows=['melee','ranged','siege'];
+          var wMap={melee:hurtF,ranged:hurtG,siege:hurtR};
+          for(var ri2=0;ri2<3;ri2++){
+            if(!wMap[allRows[ri2]])continue;
+            for(var fi2=0;fi2<G.field[allRows[ri2]].p2.length;fi2++){
+              var u2=G.field[allRows[ri2]].p2[fi2];
+              if(u2.ability!=='hero')lostP+=(u2.str||0)-1;
+            }
+          }
+          if(lostP>=6)ci=clIdx;
+        }
       }
     }
-    if(mx>=8){var si=h.findIndex(function(c){return c.ability==='scorch';});if(si>=0)ci=si;}
   }
 
-  // Priority 4: Weather cards if opponent has 2+ units on a row
+  // Priority 2: Spy cards — card advantage in R1-2
+  if(ci<0){
+    var spyIdx=h.findIndex(function(c){return c.ability==='spy';});
+    if(spyIdx>=0){
+      if(rnd===1)ci=spyIdx;
+      else if(rnd===2&&myCards<=3)ci=spyIdx;
+      else if(rnd===3&&myCards>=4&&diff<0)ci=spyIdx;
+    }
+  }
+
+  // Priority 3: Scorch strongest enemy
+  if(ci<0){
+    var mx=0;
+    var sRows=['melee','ranged','siege'];
+    for(var ri3=0;ri3<3;ri3++){
+      var r3=sRows[ri3];
+      for(var fi3=0;fi3<G.field[r3].p1.length;fi3++){
+        var ep=effPow(G.field[r3].p1[fi3],r3);if(ep>mx)mx=ep;
+      }
+    }
+    if(mx>=7){var scIdx=h.findIndex(function(c){return c.ability==='scorch';});if(scIdx>=0)ci=scIdx;}
+  }
+
+  // Priority 4: Weather — hit most valuable row
   if(ci<0){
     var om=G.field.melee.p1.filter(function(c){return c.ability!=='hero';}).length;
     var orow=G.field.ranged.p1.filter(function(c){return c.ability!=='hero';}).length;
     var os=G.field.siege.p1.filter(function(c){return c.ability!=='hero';}).length;
-    var wi=-1;
-    if(om>=2&&!G.weather.frost)wi=h.findIndex(function(c){return c.ability==='weather'&&c.weatherType==='frost';});
-    if(wi<0&&orow>=2&&!G.weather.fog)wi=h.findIndex(function(c){return c.ability==='weather'&&c.weatherType==='fog';});
-    if(wi<0&&os>=2&&!G.weather.rain)wi=h.findIndex(function(c){return c.ability==='weather'&&c.weatherType==='rain';});
-    if(wi>=0)ci=wi;
+    var wi=-1,wv=0;
+    if(om>=2&&!G.weather.frost){
+      var rv=0;for(var u of G.field.melee.p1)if(u.ability!=='hero')rv+=effPow(u,'melee')-1;
+      if(rv>wv){wv=rv;wi=h.findIndex(function(c){return c.ability==='weather'&&c.weatherType==='frost';});}
+    }
+    if(orow>=2&&!G.weather.fog){
+      var rv=0;for(var u of G.field.ranged.p1)if(u.ability!=='hero')rv+=effPow(u,'ranged')-1;
+      if(rv>wv){wv=rv;wi=h.findIndex(function(c){return c.ability==='weather'&&c.weatherType==='fog';});}
+    }
+    if(os>=2&&!G.weather.rain){
+      var rv=0;for(var u of G.field.siege.p1)if(u.ability!=='hero')rv+=effPow(u,'siege')-1;
+      if(rv>wv){wv=rv;wi=h.findIndex(function(c){return c.ability==='weather'&&c.weatherType==='rain';});}
+    }
+    if(wv>=4&&wi>=0)ci=wi;
   }
 
-  // Priority 5: Medic if there's a good card to revive
+  // Priority 5: Medic — revive best card from discard
   if(ci<0){
     var mi=h.findIndex(function(c){return c.ability==='medic';});
-    if(mi>=0&&G.discard.p2.some(function(c){return c.row&&c.str>=4&&c.ability!=='hero'&&c.ability!=='spy';}))ci=mi;
+    if(mi>=0){
+      var bestRV=0;
+      for(var di=0;di<G.discard.p2.length;di++){
+        var dc2=G.discard.p2[di];
+        if(dc2.row&&dc2.str>=4&&dc2.ability!=='hero'&&dc2.ability!=='spy'){
+          var dv=cardValue(dc2);if(dv>bestRV)bestRV=dv;
+        }
+      }
+      if(bestRV>0)ci=mi;
+    }
   }
 
-  // Priority 6: Play a unit card — STRATEGY VARIES BY ROUND
+  // Priority 6: Bond synergy — if matching card on field, play it
+  if(ci<0){
+    var bestBondIdx=-1,bestBondVal=0;
+    for(var bi=0;bi<h.length;bi++){
+      var bc=h[bi];
+      if(!bc.str||bc.ability==='spy'||bc.ability==='weather'||bc.ability==='clear'||bc.ability==='scorch')continue;
+      if(bc.row){
+        var matchCount=G.field[bc.row].p2.filter(function(u){return u.name===bc.name&&u.ability!=='hero';}).length;
+        if(matchCount>=1){
+          var bv2=bc.str*(1+matchCount);
+          if(bv2>bestBondVal){bestBondVal=bv2;bestBondIdx=bi;}
+        }
+      }
+    }
+    if(bestBondIdx>=0){
+      if(rnd===3)ci=bestBondIdx;
+      else if(cardValue(h[bestBondIdx])<=6)ci=bestBondIdx;
+    }
+  }
+
+  // Priority 7: Unit cards — strategy by round
   if(ci<0){
     var candidates=[];
-    for(var i=0;i<h.length;i++){
-      var c=h[i];
-      if(c.ability==='spy'||c.ability==='weather'||c.ability==='clear'||c.ability==='scorch')continue;
-      candidates.push({idx:i,str:c.str||0,ability:c.ability});
+    for(var i2=0;i2<h.length;i2++){
+      var c2=h[i2];
+      if(!c2.str&&c2.ability!=='morale')continue;
+      if(c2.ability==='spy'||c2.ability==='weather'||c2.ability==='clear'||c2.ability==='scorch')continue;
+      candidates.push({idx:i2,val:cardValue(c2),str:c2.str||0});
     }
     if(candidates.length>0){
-      candidates.sort(function(a,b){return a.str-b.str;}); // ascending
+      candidates.sort(function(a,b){return a.val-b.val;});
       if(rnd===1){
-        // Round 1: play LOW value cards, save power cards for later
-        // Pick from the weaker half, but not the absolute weakest (keep some fodder)
-        var pickFrom=Math.max(0,Math.floor(candidates.length*0.5)-1);
-        ci=candidates[pickFrom].idx;
+        var maxPick=Math.max(1,Math.floor(candidates.length*0.4));
+        ci=candidates[0|Math.random()*maxPick].idx;
       } else if(rnd===2){
-        // Round 2: play medium cards
-        var mid=Math.floor(candidates.length*0.3);
-        ci=candidates[mid].idx;
+        if(iWonR1){
+          var maxPick2=Math.max(1,Math.floor(candidates.length*0.4));
+          ci=candidates[0|Math.random()*maxPick2].idx;
+        } else {
+          var mid=Math.floor(candidates.length*0.5);
+          ci=candidates[mid].idx;
+        }
       } else {
-        // Round 3: UNLEASH HELL — play the STRONGEST cards
         ci=candidates[candidates.length-1].idx;
       }
     }
   }
 
-  // Fallback: play last card if nothing selected
   if(ci<0)ci=h.length-1;
-
-  // Last card + losing = pass
-  if(h.length<=1&&diff<=0){G.passed.p2=true;afterPlay();return;}
+  if(h.length<=1&&diff>=15){G.passed.p2=true;afterPlay();return;}
 
   playCard('p2',ci);
 }
