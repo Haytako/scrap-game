@@ -157,6 +157,8 @@ content:'';position:absolute;top:0;left:0;right:0;bottom:0;
 background:repeating-linear-gradient(45deg,transparent,transparent 4px,rgba(20,254,20,.03) 4px,rgba(20,254,20,.03) 5px);
 }
 .card-back svg{width:18px;height:18px;opacity:.3;display:block}
+.opp-hand .card-back{width:clamp(14px,2.5vw,22px);height:clamp(18px,3vw,26px);padding:1px}
+.opp-hand .card-back svg{width:10px;height:10px}
 
 .hand-area{
 flex-shrink:0;background:rgba(0,0,0,.4);border-top:1px solid var(--bdr);
@@ -169,7 +171,7 @@ overflow-x:auto;overflow-y:hidden;
 
 .opp-hand{
 flex-shrink:0;background:rgba(0,0,0,.3);border-bottom:1px solid var(--bdr);
-padding:3px;display:flex;align-items:center;gap:2px;min-height:clamp(18px,3vw,28px);overflow:hidden;
+padding:3px;display:flex;align-items:center;gap:2px;height:clamp(18px,3vw,28px);max-height:clamp(18px,3vw,28px);overflow:hidden;
 }
 
 .controls{
