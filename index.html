@@ -76,20 +76,20 @@ text-shadow:0 0 4px var(--g);
 display:flex;align-items:center;justify-content:space-between;padding:4px 8px;
 background:var(--pbg);border-bottom:1px solid var(--bdr);flex-shrink:0;gap:4px;min-height:36px;
 }
-.hud-round{font-size:clamp(8px,1.8vw,11px);color:var(--dg);text-transform:uppercase;letter-spacing:1px}
-.hud-scores{display:flex;align-items:center;gap:6px;font-size:clamp(10px,2vw,14px)}
+.hud-round{font-size:clamp(9px,2vw,12px);color:var(--dg);text-transform:uppercase;letter-spacing:1px}
+.hud-scores{display:flex;align-items:center;gap:6px;font-size:clamp(12px,2.2vw,16px)}
 .hud-score{padding:2px 6px;border:1px solid var(--bdr);border-radius:3px}
 .hud-score.p2-s{color:var(--red);border-color:rgba(208,64,64,.4)}
 .hud-score.p1-s{color:var(--g);border-color:rgba(20,254,20,.4)}
-.hud-vs{color:var(--vg);font-size:clamp(8px,1.5vw,10px)}
-.hud-info{font-size:clamp(7px,1.5vw,9px);color:var(--vg);letter-spacing:1px}
+.hud-vs{color:var(--vg);font-size:clamp(9px,1.8vw,11px)}
+.hud-info{font-size:clamp(8px,1.6vw,10px);color:var(--vg);letter-spacing:1px}
 
 .weather-bar{
 display:flex;gap:4px;padding:2px 8px;background:rgba(0,0,0,.3);border-bottom:1px solid rgba(26,58,26,.5);
 flex-shrink:0;min-height:20px;align-items:center;
 }
 .weather-tag{
-font-size:clamp(6px,1.2vw,8px);padding:1px 4px;border:1px solid;border-radius:2px;
+font-size:clamp(7px,1.4vw,9px);padding:1px 4px;border:1px solid;border-radius:2px;
 text-transform:uppercase;letter-spacing:1px;
 }
 .weather-tag.frost{color:#88aaff;border-color:rgba(136,170,255,.3)}
@@ -106,7 +106,7 @@ margin:1px 0;min-height:0;position:relative;
 .row.ranged-row{border-left:2px solid var(--ranged)}
 .row.siege-row{border-left:2px solid var(--siege)}
 .row-label{
-font-size:clamp(6px,1.2vw,8px);color:var(--vg);padding:1px 4px;
+font-size:clamp(7px,1.4vw,9px);color:var(--vg);padding:1px 4px;
 text-transform:uppercase;letter-spacing:1px;background:rgba(0,0,0,.3);
 position:absolute;top:0;left:24px;z-index:2;white-space:nowrap;
 }
@@ -131,18 +131,18 @@ transition:transform .12s,box-shadow .12s;overflow:hidden;
 .card.weather-card{background:#0d1a1a;border-color:rgba(100,100,200,.5)}
 .card.weather-card .card-name{color:#8888cc}
 
-.card-name{font-size:clamp(5px,1vw,7px);color:var(--dg);text-align:center;line-height:1.1;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-transform:uppercase;padding-top:1px}
+.card-name{font-size:clamp(6px,1.3vw,8px);color:var(--dg);text-align:center;line-height:1.1;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-transform:uppercase;padding-top:1px}
 .card-icon{flex:1;display:flex;align-items:center;justify-content:center;width:100%;padding:1px}
 .card-icon svg{width:100%;height:100%;max-width:clamp(22px,4.5vw,34px);max-height:clamp(22px,4.5vw,34px)}
-.card-str{font-size:clamp(11px,2.2vw,16px);font-weight:bold;color:var(--g);text-shadow:0 0 6px var(--g);line-height:1}
-.card-str.zero{color:var(--vg);font-size:clamp(9px,1.8vw,13px)}
+.card-str{font-size:clamp(12px,2.5vw,18px);font-weight:bold;color:var(--g);text-shadow:0 0 6px var(--g);line-height:1}
+.card-str.zero{color:var(--vg);font-size:clamp(10px,2vw,14px)}
 .card-badge{
 position:absolute;top:1px;right:2px;width:10px;height:10px;
 display:flex;align-items:center;justify-content:center;
 }
 .card-badge svg{width:8px;height:8px}
 .card-weather-type{
-font-size:clamp(5px,1vw,6px);color:var(--vg);text-transform:uppercase;
+font-size:clamp(6px,1.2vw,7px);color:var(--vg);text-transform:uppercase;
 text-align:center;line-height:1;
 }
 
@@ -178,16 +178,16 @@ padding:4px 8px;background:var(--pbg);border-top:1px solid var(--bdr);flex-shrin
 }
 .ctrl-btn{
 padding:4px 14px;background:var(--bbg);border:1px solid var(--dg);color:var(--g);
-font-family:inherit;font-size:clamp(8px,1.5vw,10px);cursor:pointer;text-transform:uppercase;
+font-family:inherit;font-size:clamp(9px,1.8vw,11px);cursor:pointer;text-transform:uppercase;
 letter-spacing:1px;border-radius:3px;transition:all .15s;
 }
 .ctrl-btn:hover{background:#0a3a0a;border-color:var(--g);box-shadow:0 0 8px rgba(20,254,20,.3)}
 .ctrl-btn:disabled{opacity:.3;cursor:not-allowed;box-shadow:none}
-.ctrl-info{font-size:clamp(7px,1.3vw,9px);color:var(--vg);letter-spacing:1px}
-.ctrl-turn{font-size:clamp(7px,1.2vw,9px);color:var(--dg);letter-spacing:1px}
+.ctrl-info{font-size:clamp(8px,1.5vw,10px);color:var(--vg);letter-spacing:1px}
+.ctrl-turn{font-size:clamp(8px,1.4vw,10px);color:var(--dg);letter-spacing:1px}
 
 .row-power{
-position:absolute;top:1px;right:2px;font-size:clamp(7px,1.3vw,9px);
+position:absolute;top:1px;right:2px;font-size:clamp(8px,1.5vw,10px);
 color:var(--g);z-index:3;padding:0 3px;background:rgba(0,0,0,.6);border-radius:2px;
 text-shadow:0 0 3px var(--g);
 }
@@ -261,6 +261,22 @@ animation:pulse-dot 2s infinite;
   .rp-title{font-size:6px}
   .rp-dial{width:32px;height:32px}
   .game-hud{padding:2px 4px}
+  .card-name{font-size:5px;letter-spacing:0}
+  .card{width:clamp(42px,8vw,60px);height:clamp(60px,11vw,84px)}
+  .card-str{font-size:clamp(10px,2vw,14px)}
+  .card-weather-type{font-size:5px}
+  .ctrl-btn{font-size:clamp(7px,1.4vw,9px);padding:3px 10px}
+  .ctrl-info,.ctrl-turn{font-size:7px}
+  .hud-round{font-size:clamp(7px,1.6vw,10px)}
+  .hud-scores{font-size:clamp(10px,2vw,14px)}
+  .hud-info{font-size:7px}
+  .row-label{font-size:5px;left:18px}
+  .row-power{font-size:7px}
+}
+@media(max-width:380px){
+  .card-name{font-size:4.5px;letter-spacing:0}
+  .card{width:clamp(38px,7.5vw,52px);height:clamp(54px,10vw,72px)}
+  .card-str{font-size:clamp(9px,1.8vw,12px)}
 }
 </style>
 </head>
