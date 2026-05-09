@@ -63,10 +63,6 @@
 - CSS CRT-эффекты (scanlines, vignette, flicker)
 - Адаптивный дизайн (мобильные устройства + десктоп)
 
-## Скриншот
-
-![SCRAP — Pip-Boy стиль](https://raw.githubusercontent.com/Haytako/scrap-game/main/screenshot.png)
-
 ## Лицензия
 
 Свободное использование. Создано с любовью к Fallout и Gwent.
