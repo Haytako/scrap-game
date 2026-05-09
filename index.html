@@ -163,6 +163,12 @@
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
   }
+  #aiHandCards {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+    flex-shrink: 0;
+  }
 
   /* ===== BOARD ===== */
   .board {
@@ -170,6 +176,7 @@
     display: flex; flex-direction: column;
     overflow-y: auto;
     min-height: 0;
+    background: rgba(0,10,0,0.4);
   }
 
   .row {
@@ -1321,6 +1328,21 @@ function scheduleAI() {
 function continueFromRoundEnd() {
   if (G.phase === 'roundEnd') {
     newRound();
+    // Auto-skip empty rounds: if both players have 0 cards, resolve immediately
+    if (G.phase === 'playing' && G.pHand.length === 0 && G.aHand.length === 0) {
+      doPass(true); doPass(false);
+      checkEnd();
+      saveGame();
+      if (G.phase === 'roundEnd') {
+        // Still need another round? Auto-skip again
+        newRound();
+        if (G.phase === 'playing' && G.pHand.length === 0 && G.aHand.length === 0) {
+          doPass(true); doPass(false);
+          checkEnd();
+          saveGame();
+        }
+      }
+    }
     render();
     saveGame();
     // If AI goes first, schedule AI
