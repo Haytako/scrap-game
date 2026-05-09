@@ -1,1471 +1,1594 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>SCRAP — Card Duel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>SCRAP — Карточная игра выживших</title>
 <style>
-  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-  
-  :root {
-    --green: #00ff00;
-    --green-dim: #008800;
-    --green-dark: #005500;
-    --green-glow: rgba(0,255,65,0.25);
-    --green-bright: #33ff33;
-    --bg: #060d06;
-    --bg-light: #0d150d;
-    --bg-panel: #0a120a;
-    --border: #00aa00;
-    --border-dim: #006600;
-    --text: #00ff00;
-    --text-dim: #007700;
-    --amber: #ffb000;
-    --red: #ff2020;
-    --cyan: #00ffff;
-  }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--g:#14fe14;--dg:#0a8a0a;--vg:#1a4a1a;--bg:#0a120a;--dbg:#0d1a0d;
+--cbg:#132213;--bbg:#0a2a0a;--pbg:#0f1a0f;--bdr:#1a3a1a;
+--bezel:#2d3a2b;--melee:#c8a040;--ranged:#40a0a0;--siege:#c0c040;
+--orange:#d08030;--red:#d04040;
+}
+html,body{height:100%;overflow:hidden;background:#1a1a1a;font-family:'Courier New','Lucida Console',monospace;color:var(--g)}
+body{display:flex;align-items:center;justify-content:center}
 
-  html, body {
-    width: 100%; height: 100%;
-    overflow: hidden;
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Courier New', monospace;
-    -webkit-tap-highlight-color: transparent;
-    user-select: none;
-    -webkit-user-select: none;
-  }
+.crt-frame{
+background:var(--bezel);border-radius:18px;padding:10px;
+box-shadow:0 0 30px rgba(0,0,0,.8),inset 0 0 20px rgba(0,0,0,.5);
+display:flex;gap:0;max-width:1200px;width:100%;height:100vh;max-height:900px;
+}
+@media(min-width:900px){.crt-frame{padding:14px;border-radius:22px}}
 
-  /* ===== MENU OVERLAY ===== */
-  .menu-overlay {
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,6,0,0.95);
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    z-index: 100;
-    gap: 16px;
-    padding: 20px;
-    transition: opacity 0.3s;
-  }
-  .menu-overlay.hidden { display: none; }
+.screen-wrap{flex:1;position:relative;border-radius:10px;overflow:hidden;background:var(--bg);display:flex;flex-direction:column}
+.screen{position:relative;flex:1;display:flex;flex-direction:column;overflow:hidden;z-index:1}
 
-  .menu-title {
-    font-size: 36px; letter-spacing: 8px;
-    text-shadow: 0 0 20px var(--green-glow), 0 0 40px var(--green-glow);
-    margin-bottom: 8px;
-  }
-  .menu-subtitle {
-    font-size: 12px; color: var(--text-dim);
-    text-align: center; max-width: 340px;
-    line-height: 1.6;
-  }
-  .menu-rules {
-    font-size: 11px; color: var(--text-dim);
-    text-align: center; line-height: 1.7;
-    max-width: 320px;
-  }
-  .menu-rules span { color: var(--amber); }
+.right-panel{
+width:90px;background:var(--pbg);border:2px solid var(--bdr);border-radius:8px;
+display:flex;flex-direction:column;align-items:center;padding:12px 6px;gap:10px;flex-shrink:0;
+}
+@media(min-width:900px){.right-panel{width:100px;padding:14px 8px}}
 
-  .btn {
-    background: var(--bg-light);
-    border: 1px solid var(--border);
-    color: var(--green);
-    font-family: 'Courier New', monospace;
-    font-size: 16px;
-    padding: 10px 30px;
-    cursor: pointer;
-    letter-spacing: 3px;
-    text-shadow: 0 0 4px var(--green-glow);
-    transition: all 0.2s;
-  }
-  .btn:hover { background: var(--green-dark); box-shadow: 0 0 12px var(--green-glow); }
-  .btn:active { background: rgba(0,255,0,0.15); }
+.rp-title{font-size:8px;color:var(--vg);letter-spacing:1px;margin-bottom:4px;text-transform:uppercase}
+.rp-btn{
+width:100%;padding:8px 4px;background:var(--bbg);border:1px solid var(--dg);
+color:var(--g);font-family:inherit;font-size:9px;cursor:pointer;text-transform:uppercase;
+letter-spacing:1px;border-radius:3px;transition:all .15s;
+}
+.rp-btn:hover{background:#0a3a0a;border-color:var(--g);box-shadow:0 0 8px rgba(20,254,20,.3)}
+.rp-btn:active{transform:scale(.96)}
+.rp-dial{
+width:50px;height:50px;border-radius:50%;border:2px solid var(--bdr);
+background:radial-gradient(circle,#1a2a1a 40%,#0a150a 100%);
+position:relative;margin-top:auto;box-shadow:inset 0 0 10px rgba(0,0,0,.5);
+display:flex;align-items:center;justify-content:center;
+}
+.rp-dial svg{width:32px;height:32px;opacity:.6;transition:opacity .3s}
+.rp-dial:hover svg{opacity:1}
+.rp-btn.lang-btn{font-size:7px;padding:5px 3px;letter-spacing:0;border-color:rgba(20,254,20,.4);color:var(--dg)}
+.rp-btn.lang-btn:hover{color:var(--g);border-color:var(--g)}
 
-  .btn-small {
-    font-size: 12px;
-    padding: 6px 14px;
-    letter-spacing: 2px;
-  }
-  .btn-danger {
-    border-color: var(--red);
-    color: var(--red);
-  }
-  .btn-danger:hover { background: rgba(255,32,32,0.15); box-shadow: 0 0 8px rgba(255,32,32,0.3); }
+.scanlines{
+position:absolute;top:0;left:0;right:0;bottom:0;z-index:10;pointer-events:none;
+background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,20,0,.15) 2px,rgba(0,20,0,.15) 3px);
+}
+.vignette{
+position:absolute;top:0;left:0;right:0;bottom:0;z-index:9;pointer-events:none;
+background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,.6) 100%);
+}
+@keyframes flicker{0%,100%{opacity:1}50%{opacity:.97}}
+.screen-wrap{animation:flicker 4s infinite}
 
-  /* ===== HAMBURGER ===== */
-  .hamburger {
-    position: fixed; top: 50px; right: 8px;
-    width: 36px; height: 36px;
-    background: var(--bg-panel);
-    border: 1px solid var(--border-dim);
-    color: var(--text-dim);
-    font-size: 20px;
-    cursor: pointer;
-    z-index: 50;
-    display: none;
-    align-items: center; justify-content: center;
-    border-radius: 2px;
-  }
-  .hamburger:active { background: var(--green-dark); }
+#menu-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:20px;text-align:center}
+.menu-title{font-size:clamp(36px,8vw,64px);letter-spacing:6px;text-shadow:0 0 20px var(--g),0 0 40px rgba(20,254,20,.4);color:var(--g);font-weight:bold}
+.menu-sub{font-size:clamp(10px,2.5vw,14px);color:var(--dg);letter-spacing:3px;text-transform:uppercase}
+.menu-btn{
+padding:12px 24px;background:var(--bbg);border:1px solid var(--dg);color:var(--g);
+font-family:inherit;font-size:clamp(10px,2vw,14px);cursor:pointer;text-transform:uppercase;
+letter-spacing:2px;border-radius:4px;min-width:220px;transition:all .15s;
+text-shadow:0 0 4px var(--g);
+}
+.menu-btn:hover{background:#0a3a0a;border-color:var(--g);box-shadow:0 0 12px rgba(20,254,20,.3)}
 
-  /* ===== GAME CONTAINER ===== */
-  .game {
-    width: 100%; height: 100%;
-    display: flex; flex-direction: column;
-    overflow: hidden;
-    position: relative;
-  }
+.game-hud{
+display:flex;align-items:center;justify-content:space-between;padding:4px 8px;
+background:var(--pbg);border-bottom:1px solid var(--bdr);flex-shrink:0;gap:4px;min-height:36px;
+}
+.hud-round{font-size:clamp(8px,1.8vw,11px);color:var(--dg);text-transform:uppercase;letter-spacing:1px}
+.hud-scores{display:flex;align-items:center;gap:6px;font-size:clamp(10px,2vw,14px)}
+.hud-score{padding:2px 6px;border:1px solid var(--bdr);border-radius:3px}
+.hud-score.p2-s{color:var(--red);border-color:rgba(208,64,64,.4)}
+.hud-score.p1-s{color:var(--g);border-color:rgba(20,254,20,.4)}
+.hud-vs{color:var(--vg);font-size:clamp(8px,1.5vw,10px)}
+.hud-info{font-size:clamp(7px,1.5vw,9px);color:var(--vg);letter-spacing:1px}
 
-  /* ===== STATUS BAR ===== */
-  .status-bar {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--border-dim);
-    font-size: 12px; letter-spacing: 1px;
-    flex-shrink: 0;
-    background: var(--bg-panel);
-  }
-  .round-scores {
-    font-size: 18px; font-weight: bold; letter-spacing: 3px;
-  }
-  .turn-indicator {
-    font-size: 10px;
-    animation: blink 1.2s ease-in-out infinite;
-  }
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-  }
+.weather-bar{
+display:flex;gap:4px;padding:2px 8px;background:rgba(0,0,0,.3);border-bottom:1px solid rgba(26,58,26,.5);
+flex-shrink:0;min-height:20px;align-items:center;
+}
+.weather-tag{
+font-size:clamp(6px,1.2vw,8px);padding:1px 4px;border:1px solid;border-radius:2px;
+text-transform:uppercase;letter-spacing:1px;
+}
+.weather-tag.frost{color:#88aaff;border-color:rgba(136,170,255,.3)}
+.weather-tag.fog{color:#aa88ff;border-color:rgba(170,136,255,.3)}
+.weather-tag.rain{color:#aaff88;border-color:rgba(170,255,136,.3)}
 
-  /* ===== AI HAND ===== */
-  .ai-hand {
-    display: flex; align-items: center;
-    padding: 4px 12px; gap: 3px;
-    flex-shrink: 0;
-    border-bottom: 1px solid var(--border-dim);
-    background: rgba(0,12,0,0.6);
-    overflow-x: auto;
-  }
-  .ai-hand-label {
-    font-size: 9px; color: var(--text-dim);
-    margin-right: 6px; flex-shrink: 0;
-  }
-  .ai-hand-count {
-    font-size: 9px; color: var(--text-dim);
-    margin-left: 6px; flex-shrink: 0;
-  }
-  .card-back {
-    width: 30px; height: 40px;
-    border: 1px solid var(--border-dim);
-    background: var(--bg);
-    color: var(--border-dim);
-    font-size: 11px;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-  }
-  #aiHandCards {
-    display: flex;
-    gap: 3px;
-    align-items: center;
-    flex-shrink: 0;
-  }
+.game-field{flex:1;display:flex;flex-direction:column;overflow:hidden;padding:2px}
 
-  /* ===== BOARD ===== */
-  .board {
-    flex: 1;
-    display: flex; flex-direction: column;
-    overflow-y: auto;
-    min-height: 0;
-    background: rgba(0,10,0,0.4);
-  }
+.row{
+flex:1;display:flex;flex-direction:column;border:1px solid rgba(26,58,26,.3);
+margin:1px 0;min-height:0;position:relative;
+}
+.row.melee-row{border-left:2px solid var(--melee)}
+.row.ranged-row{border-left:2px solid var(--ranged)}
+.row.siege-row{border-left:2px solid var(--siege)}
+.row-label{
+font-size:clamp(6px,1.2vw,8px);color:var(--vg);padding:1px 4px;
+text-transform:uppercase;letter-spacing:1px;background:rgba(0,0,0,.3);
+position:absolute;top:0;left:24px;z-index:2;white-space:nowrap;
+}
+.row-content{flex:1;display:flex;flex-direction:column;min-height:0}
+.row-side{flex:1;display:flex;align-items:center;flex-wrap:wrap;padding:1px;gap:2px;min-height:0;overflow:hidden}
+.row-divider{height:1px;background:rgba(26,58,26,.5);flex-shrink:0}
 
-  .row {
-    display: flex; flex-direction: column;
-    padding: 2px 8px;
-    border-bottom: 1px solid rgba(0,80,0,0.3);
-    flex-shrink: 0;
-  }
-  .row-label {
-    font-size: 8px; color: var(--text-dim);
-    letter-spacing: 2px; margin-bottom: 1px;
-  }
-  .row-side {
-    display: flex; align-items: center; gap: 4px;
-    margin-bottom: 1px;
-  }
-  .row-side:last-child { margin-bottom: 0; }
-  .row-score-label {
-    font-size: 9px; color: var(--text-dim);
-    min-width: 38px; flex-shrink: 0;
-    letter-spacing: 1px;
-  }
-  .row-score-label b { color: var(--green); }
-  .row-cards {
-    display: flex; gap: 3px;
-    overflow-x: auto; flex: 1;
-    align-items: center;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border-dim) transparent;
-  }
-  .row-cards::-webkit-scrollbar { height: 2px; }
-  .row-cards::-webkit-scrollbar-thumb { background: var(--border-dim); }
+.card{
+width:clamp(46px,9vw,68px);height:clamp(66px,13vw,96px);
+background:var(--cbg);border:1px solid var(--dg);border-radius:3px;
+display:inline-flex;flex-direction:column;align-items:center;justify-content:space-between;
+padding:2px;cursor:default;position:relative;flex-shrink:0;
+transition:transform .12s,box-shadow .12s;overflow:hidden;
+}
+.card.playable{cursor:pointer;border-color:var(--g);box-shadow:0 0 6px rgba(20,254,20,.3)}
+.card.playable:hover{transform:translateY(-6px);box-shadow:0 0 14px rgba(20,254,20,.5);border-color:#fff;z-index:5}
+.card.hero-card{border-color:rgba(220,180,60,.6)}
+.card.hero-card .card-str{color:var(--orange);text-shadow:0 0 6px var(--orange)}
+.card.ability-spy{border-color:rgba(200,160,64,.6)}
+.card.ability-medic{border-color:rgba(64,200,100,.6)}
+.card.ability-morale{border-color:rgba(100,180,255,.6)}
+.card.weather-card{background:#0d1a1a;border-color:rgba(100,100,200,.5)}
+.card.weather-card .card-name{color:#8888cc}
 
-  /* Board cards (small) */
-  .board-card {
-    width: 30px; height: 38px;
-    border: 1px solid var(--border-dim);
-    background: var(--bg-light);
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    flex-shrink: 0;
-    transition: all 0.2s;
-    position: relative;
-    overflow: hidden;
-  }
-  .board-card .board-strip {
-    position: absolute; top: 0; left: 0; right: 0; height: 4px;
-  }
-  .board-card .board-strip.strip-close { background: linear-gradient(90deg, rgba(255,60,20,0.6), rgba(255,120,20,0.4)); }
-  .board-card .board-strip.strip-ranged { background: linear-gradient(90deg, rgba(0,180,255,0.6), rgba(0,120,255,0.4)); }
-  .board-card .board-strip.strip-siege { background: linear-gradient(90deg, rgba(180,120,0,0.6), rgba(140,90,0,0.4)); }
-  .board-card.power { font-size: 15px; font-weight: bold; color: var(--green); }
-  .board-card.power.hero-power { color: var(--amber); }
-  .board-card.power.weather-power { color: var(--cyan); }
-  .board-card.ability-sym { font-size: 8px; color: var(--amber); margin-top: -2px; }
-  .board-card.weathered { opacity: 0.5; border-color: var(--cyan); }
+.card-name{font-size:clamp(5px,1vw,7px);color:var(--dg);text-align:center;line-height:1.1;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-transform:uppercase;padding-top:1px}
+.card-icon{flex:1;display:flex;align-items:center;justify-content:center;width:100%;padding:1px}
+.card-icon svg{width:100%;height:100%;max-width:clamp(22px,4.5vw,34px);max-height:clamp(22px,4.5vw,34px)}
+.card-str{font-size:clamp(11px,2.2vw,16px);font-weight:bold;color:var(--g);text-shadow:0 0 6px var(--g);line-height:1}
+.card-str.zero{color:var(--vg);font-size:clamp(9px,1.8vw,13px)}
+.card-badge{
+position:absolute;top:1px;right:2px;width:10px;height:10px;
+display:flex;align-items:center;justify-content:center;
+}
+.card-badge svg{width:8px;height:8px}
+.card-weather-type{
+font-size:clamp(5px,1vw,6px);color:var(--vg);text-transform:uppercase;
+text-align:center;line-height:1;
+}
 
-  .row-empty {
-    font-size: 9px; color: var(--border-dim);
-  }
+.card-back{
+width:clamp(46px,9vw,68px);height:clamp(66px,13vw,96px);
+background:var(--cbg);border:1px solid var(--bdr);border-radius:3px;
+display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;
+position:relative;overflow:hidden;
+}
+.card-back::after{
+content:'';position:absolute;top:0;left:0;right:0;bottom:0;
+background:repeating-linear-gradient(45deg,transparent,transparent 4px,rgba(20,254,20,.03) 4px,rgba(20,254,20,.03) 5px);
+}
+.card-back svg{width:20px;height:20px;opacity:.3}
 
-  /* ===== PLAYER HAND ===== */
-  .player-hand-area {
-    flex-shrink: 0;
-    border-top: 1px solid var(--border);
-    background: var(--bg-panel);
-    padding: 6px 0;
-  }
-  .player-hand {
-    display: flex; gap: 5px;
-    padding: 0 10px;
-    overflow-x: auto;
-    align-items: center;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border-dim) transparent;
-  }
-  .player-hand::-webkit-scrollbar { height: 3px; }
-  .player-hand::-webkit-scrollbar-thumb { background: var(--border-dim); }
+.hand-area{
+flex-shrink:0;background:rgba(0,0,0,.4);border-top:1px solid var(--bdr);
+padding:4px;display:flex;align-items:center;gap:3px;min-height:clamp(76px,14vw,108px);
+overflow-x:auto;overflow-y:hidden;
+}
+.hand-area::-webkit-scrollbar{height:3px}
+.hand-area::-webkit-scrollbar-track{background:transparent}
+.hand-area::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:2px}
 
-  /* Hand cards (large, tappable) */
-  .hand-card {
-    width: 60px; height: 90px;
-    border: 1px solid var(--border);
-    background: var(--bg-light);
-    display: flex; flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    flex-shrink: 0;
-    cursor: pointer;
-    transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
-    touch-action: manipulation;
-    position: relative;
-    overflow: hidden;
-  }
-  .hand-card.active:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 0 16px var(--green-glow);
-  }
-  .hand-card.active:active {
-    transform: translateY(-2px);
-    background: var(--green-dark);
-  }
-  .hand-card.disabled {
-    opacity: 0.4; cursor: default;
-    transform: none !important;
-    box-shadow: none !important;
-  }
-  .hand-card .card-art {
-    width: 100%;
-    height: 22px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    border-bottom: 1px solid var(--border-dim);
-    background: var(--bg);
-    flex-shrink: 0;
-  }
-  .hand-card .card-art.close-art { background: linear-gradient(180deg, rgba(255,60,20,0.2), transparent); }
-  .hand-card .card-art.ranged-art { background: linear-gradient(180deg, rgba(0,180,255,0.2), transparent); }
-  .hand-card .card-art.siege-art { background: linear-gradient(180deg, rgba(180,120,0,0.2), transparent); }
-  .hand-card .card-art.hero-art { background: linear-gradient(180deg, rgba(255,176,0,0.3), transparent); }
-  .hand-card .card-art.weather-art { background: linear-gradient(180deg, rgba(0,255,255,0.2), transparent); }
-  .hand-card .card-art.spy-art { background: linear-gradient(180deg, rgba(160,0,255,0.2), transparent); }
-  .hand-card .card-art.medic-art { background: linear-gradient(180deg, rgba(255,80,80,0.2), transparent); }
-  .hand-card .card-art.scorch-art { background: linear-gradient(180deg, rgba(255,0,0,0.3), transparent); }
-  .hand-card .card-art.clear-art { background: linear-gradient(180deg, rgba(255,255,0,0.2), transparent); }
-  .hand-card .card-art.decoy-art { background: linear-gradient(180deg, rgba(255,176,0,0.15), transparent); }
-  .hand-card .card-art.morale-art { background: linear-gradient(180deg, rgba(200,100,255,0.15), transparent); }
-  .hand-card .card-art.bond-art { background: linear-gradient(180deg, rgba(100,255,100,0.15), transparent); }
-  .hand-card .card-power {
-    font-size: 18px; font-weight: bold; color: var(--green);
-  }
-  .hand-card .card-name {
-    font-size: 7px; color: var(--text);
-    text-align: center; line-height: 1.1;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    max-width: 54px;
-  }
-  .hand-card .card-ability {
-    font-size: 10px; color: var(--amber);
-  }
-  .hand-card.bond { border-color: var(--green-bright); }
-  .hand-card.medic { border-color: #ff6666; }
-  .hand-card.hero { border-color: var(--amber); }
-  .hand-card.spy { border-color: var(--cyan); }
-  .hand-card.weather-card { border-color: var(--cyan); }
-  .hand-card.scorch-card { border-color: var(--red); }
-  .hand-card.decoy-card { border-color: var(--amber); }
-  .hand-card.clear-card { border-color: var(--green-bright); }
+.opp-hand{
+flex-shrink:0;background:rgba(0,0,0,.3);border-bottom:1px solid var(--bdr);
+padding:3px;display:flex;align-items:center;gap:2px;min-height:clamp(18px,3vw,28px);overflow:hidden;
+}
 
-  /* ===== CONTROLS ===== */
-  .controls {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 8px 12px;
-    border-top: 1px solid var(--border);
-    flex-shrink: 0;
-    background: var(--bg-panel);
-  }
-  .score-display {
-    display: flex; align-items: center; gap: 5px;
-    font-size: 11px; color: var(--text-dim);
-  }
-  .score-display .big { font-size: 22px; font-weight: bold; color: var(--green-bright); letter-spacing: 2px; }
-  .score-display .big.enemy { color: var(--red); }
+.controls{
+display:flex;align-items:center;justify-content:center;gap:8px;
+padding:4px 8px;background:var(--pbg);border-top:1px solid var(--bdr);flex-shrink:0;
+}
+.ctrl-btn{
+padding:4px 14px;background:var(--bbg);border:1px solid var(--dg);color:var(--g);
+font-family:inherit;font-size:clamp(8px,1.5vw,10px);cursor:pointer;text-transform:uppercase;
+letter-spacing:1px;border-radius:3px;transition:all .15s;
+}
+.ctrl-btn:hover{background:#0a3a0a;border-color:var(--g);box-shadow:0 0 8px rgba(20,254,20,.3)}
+.ctrl-btn:disabled{opacity:.3;cursor:not-allowed;box-shadow:none}
+.ctrl-info{font-size:clamp(7px,1.3vw,9px);color:var(--vg);letter-spacing:1px}
+.ctrl-turn{font-size:clamp(7px,1.2vw,9px);color:var(--dg);letter-spacing:1px}
 
-  /* ===== ROUND END OVERLAY ===== */
-  .round-overlay {
-    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    background: rgba(0,6,0,0.88);
-    z-index: 10; gap: 14px;
-    cursor: pointer;
-  }
-  .round-overlay.hidden { display: none; }
-  .round-overlay .round-num { font-size: 12px; color: var(--text-dim); letter-spacing: 2px; }
-  .round-overlay .round-result {
-    font-size: 22px; letter-spacing: 4px;
-    text-shadow: 0 0 20px var(--green-glow);
-  }
-  .round-overlay .round-score { font-size: 28px; letter-spacing: 6px; }
-  .round-overlay .round-hint {
-    font-size: 9px; color: var(--text-dim); letter-spacing: 1px;
-    margin-top: 4px;
-  }
+.row-power{
+position:absolute;top:1px;right:2px;font-size:clamp(7px,1.3vw,9px);
+color:var(--g);z-index:3;padding:0 3px;background:rgba(0,0,0,.6);border-radius:2px;
+text-shadow:0 0 3px var(--g);
+}
 
-  /* ===== MATCH END ===== */
-  .match-end {
-    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    background: rgba(0,6,0,0.92);
-    z-index: 20; gap: 18px;
-  }
-  .match-end.hidden { display: none; }
-  .match-end .result-text {
-    font-size: 32px; letter-spacing: 6px;
-    text-shadow: 0 0 30px var(--green-glow), 0 0 60px var(--green-glow);
-  }
-  .match-end .result-score { font-size: 18px; letter-spacing: 3px; }
+.overlay{
+position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.88);
+display:flex;flex-direction:column;align-items:center;justify-content:center;
+z-index:20;gap:12px;padding:20px;text-align:center;
+}
+.overlay.hidden{display:none!important}
+.overlay-title{font-size:clamp(18px,4.5vw,32px);text-shadow:0 0 20px var(--g);letter-spacing:3px}
+.overlay-sub{font-size:clamp(10px,2vw,14px);color:var(--dg)}
+.overlay-btn{
+padding:10px 20px;background:var(--bbg);border:1px solid var(--g);color:var(--g);
+font-family:inherit;font-size:clamp(10px,2vw,13px);cursor:pointer;text-transform:uppercase;
+letter-spacing:2px;border-radius:4px;min-width:180px;transition:all .15s;margin-top:8px;
+text-shadow:0 0 4px var(--g);
+}
+.overlay-btn:hover{background:#0a3a0a;box-shadow:0 0 12px rgba(20,254,20,.4)}
+.overlay-btn.primary{border-color:#fff;box-shadow:0 0 10px rgba(20,254,20,.3)}
+.overlay-btn.sm{min-width:auto;padding:6px 16px;font-size:9px;margin-top:4px}
 
-  /* ===== MESSAGE FLASH ===== */
-  .msg-flash {
-    position: absolute;
-    top: 45%; left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 22px; font-weight: bold;
-    letter-spacing: 5px;
-    color: var(--green-bright);
-    text-shadow: 0 0 20px var(--green-glow), 0 0 40px var(--green-glow);
-    pointer-events: none;
-    z-index: 5;
-    animation: flash 1.1s ease-out forwards;
-  }
-  @keyframes flash {
-    0% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }
-    60% { opacity: 0.7; }
-    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.7) translateY(-20px); }
-  }
+.cityscape{
+position:absolute;bottom:0;left:0;right:0;height:30px;z-index:0;pointer-events:none;opacity:.2;
+}
 
-  /* ===== SETTINGS MENU ===== */
-  .settings-panel {
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,6,0,0.95);
-    z-index: 80;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    gap: 14px; padding: 20px;
-  }
-  .settings-panel.hidden { display: none; }
-  .settings-panel h2 { font-size: 20px; letter-spacing: 4px; }
-  .settings-panel .rules-text {
-    font-size: 10px; color: var(--text-dim);
-    text-align: center; line-height: 1.8;
-    max-width: 340px;
-  }
-  .settings-panel .rules-text span { color: var(--amber); }
+.winning-score{box-shadow:0 0 8px rgba(20,254,20,.5)}
+.losing-score{opacity:.6}
 
-  /* ===== RESPONSIVE: SMALL HEIGHT ===== */
-  @media (max-height: 500px) {
-    .hand-card { width: 50px; height: 72px; }
-    .hand-card .card-art { height: 16px; font-size: 11px; }
-    .hand-card .card-power { font-size: 15px; }
-    .hand-card .card-name { font-size: 6px; max-width: 44px; }
-    .board-card { width: 26px; height: 34px; }
-    .board-card.power { font-size: 12px; }
-    .status-bar { padding: 4px 8px; font-size: 10px; }
-    .round-scores { font-size: 14px; }
-    .controls { padding: 4px 8px; }
-    .score-display .big { font-size: 18px; }
-    .row { padding: 2px 8px; }
-    .ai-hand { padding: 2px 8px; }
-    .player-hand-area { padding: 3px 0; }
-    .player-hand { gap: 3px; }
-    .card-back { width: 24px; height: 32px; font-size: 9px; }
-  }
+/* ===== ONLINE MULTIPLAYER STYLES ===== */
+.online-input{
+background:var(--bbg);border:1px solid var(--dg);color:var(--g);
+font-family:inherit;font-size:clamp(12px,2.5vw,16px);padding:8px 12px;
+text-align:center;letter-spacing:3px;text-transform:uppercase;
+border-radius:3px;width:120px;outline:none;
+}
+.online-input::placeholder{color:var(--vg);letter-spacing:2px;font-size:clamp(10px,2vw,14px)}
+.online-input:focus{border-color:var(--g);box-shadow:0 0 8px rgba(20,254,20,.3)}
 
-  /* ===== RESPONSIVE: TABLET ===== */
-  @media (min-width: 768px) {
-    .hand-card { width: 90px; height: 120px; }
-    .hand-card .card-art { height: 28px; font-size: 18px; }
-    .hand-card .card-power { font-size: 28px; }
-    .hand-card .card-name { font-size: 10px; max-width: 84px; }
-    .hand-card .card-ability { font-size: 12px; }
-    .board-card { width: 50px; height: 66px; }
-    .board-card.power { font-size: 22px; }
-    .board-card.ability-sym { font-size: 10px; }
-    .board-card .board-strip { height: 5px; }
-    .card-back { width: 44px; height: 58px; }
-    .row-label { font-size: 12px; }
-    .row-score-label { font-size: 12px; min-width: 50px; }
-    .status-bar { padding: 12px 16px; font-size: 16px; }
-    .round-scores { font-size: 24px; }
-    .turn-indicator { font-size: 14px; }
-    .score-display { font-size: 14px; }
-    .score-display .big { font-size: 30px; }
-    .controls { padding: 12px 16px; }
-    .ai-hand { padding: 8px 16px; }
-  }
+.room-code-display{
+font-size:clamp(28px,7vw,48px);letter-spacing:8px;color:var(--g);
+text-shadow:0 0 20px var(--g),0 0 40px rgba(20,254,20,.3);
+font-weight:bold;margin:8px 0;
+padding:8px 16px;border:2px solid var(--dg);border-radius:6px;
+background:rgba(0,0,0,.4);cursor:pointer;user-select:all;
+}
+.room-code-display:hover{border-color:var(--g);box-shadow:0 0 12px rgba(20,254,20,.2)}
 
-  /* ===== RESPONSIVE: DESKTOP ===== */
-  @media (min-width: 1024px) {
-    .hand-card { width: 100px; height: 135px; }
-    .hand-card .card-art { height: 32px; font-size: 22px; }
-    .hand-card .card-power { font-size: 32px; }
-    .hand-card .card-name { font-size: 11px; max-width: 94px; }
-    .hand-card .card-ability { font-size: 14px; }
-    .board-card { width: 56px; height: 74px; }
-    .board-card.power { font-size: 26px; }
-    .board-card.ability-sym { font-size: 11px; }
-    .board-card .board-strip { height: 6px; }
-    .card-back { width: 50px; height: 66px; }
-    .row-label { font-size: 13px; }
-    .row-score-label { font-size: 13px; min-width: 55px; }
-    .status-bar { padding: 14px 20px; font-size: 18px; }
-    .round-scores { font-size: 28px; }
-    .turn-indicator { font-size: 16px; }
-    .score-display { font-size: 16px; }
-    .score-display .big { font-size: 36px; }
-    .controls { padding: 14px 20px; }
-    .ai-hand { padding: 10px 20px; }
-    .row { padding: 6px 14px; }
-    .row-cards { gap: 4px; }
-    .player-hand { gap: 8px; padding: 0 14px; }
-  }
+.conn-status{
+font-size:clamp(6px,1.2vw,8px);padding:1px 4px;border-radius:2px;
+letter-spacing:1px;text-transform:uppercase;display:none;align-items:center;gap:3px;
+}
+.conn-status.visible{display:inline-flex}
+.conn-status.online{color:var(--g)}
+.conn-status.offline{color:var(--red)}
+.conn-dot{
+width:5px;height:5px;border-radius:50%;background:currentColor;
+animation:pulse-dot 2s infinite;
+}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.3}}
 
-  /* ===== RESPONSIVE: LARGE DESKTOP ===== */
-  @media (min-width: 1400px) {
-    .hand-card { width: 110px; height: 148px; }
-    .hand-card .card-art { height: 36px; font-size: 26px; }
-    .hand-card .card-power { font-size: 36px; }
-    .hand-card .card-name { font-size: 12px; max-width: 104px; }
-    .hand-card .card-ability { font-size: 16px; }
-    .board-card { width: 62px; height: 82px; }
-    .board-card.power { font-size: 30px; }
-    .board-card.ability-sym { font-size: 12px; }
-    .board-card .board-strip { height: 7px; }
-    .card-back { width: 54px; height: 72px; font-size: 14px; }
-    .status-bar { font-size: 20px; }
-    .round-scores { font-size: 32px; }
-    .score-display .big { font-size: 40px; }
-  }
+.online-sub{font-size:clamp(9px,2vw,12px);color:var(--dg);letter-spacing:2px;text-transform:uppercase}
+.online-wait{font-size:clamp(8px,1.5vw,10px);color:var(--vg);letter-spacing:1px;margin-top:4px}
+.online-err{font-size:clamp(8px,1.5vw,10px);color:var(--red);letter-spacing:1px;margin-top:4px;min-height:14px}
+.online-divider{font-size:10px;color:var(--vg);letter-spacing:2px}
+.online-row{display:flex;gap:6px;align-items:center}
+
+@media(max-width:500px){
+  .right-panel{width:56px;padding:6px 3px;gap:6px}
+  .rp-btn{font-size:7px;padding:5px 2px;letter-spacing:0}
+  .rp-title{font-size:6px}
+  .rp-dial{width:32px;height:32px}
+  .game-hud{padding:2px 4px}
+}
 </style>
 </head>
 <body>
+<div class="crt-frame">
+  <div class="screen-wrap">
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+    <div class="screen" id="screen">
 
-<!-- MENU SCREEN -->
-<div class="menu-overlay" id="menuScreen">
-  <div class="menu-title">SCRAP</div>
-  <div class="menu-subtitle" id="menuDesc">A card duel in the Wasteland. Play cards or pass. First to win 2 rounds wins!</div>
-  <div class="menu-rules" id="menuRules">
-    <span>&#9733;</span> Hero — immune to weather<br>
-    <span>&#9670;</span> Spy — to enemy field, draw 1 card<br>
-    <span>&#9835;</span> Morale — +1 to allies in row<br>
-    <span>&#9876;</span> Bond — power x number of copies<br>
-    <span>&#10010;</span> Medic — resurrects from graveyard<br>
-    <span>&#10052;</span> Frost / <span>&#9729;</span> Fog / <span>&#9731;</span> Rain — weather<br>
-    <span>&#9788;</span> Clear — removes weather<br>
-    <span>&#128293;</span> Scorch — destroys strongest units<br>
-    <span>&#8617;</span> Decoy — return card to hand
-  </div>
-  <button class="btn btn-small" id="btnToggleLang">EN / RU</button>
-  <button class="btn" id="btnStart">START GAME</button>
-</div>
+      <div id="menu-screen">
+        <div class="menu-title">SCRAP</div>
+        <div class="menu-sub" id="menu-sub">Карточная игра выживших</div>
+        <svg width="60" height="60" viewBox="0 0 60 60" style="opacity:.35;margin:4px 0">
+          <circle cx="30" cy="30" r="28" fill="none" stroke="#14fe14" stroke-width="1"/>
+          <path d="M30 8 L34 20 L48 20 L37 28 L41 40 L30 32 L19 40 L23 28 L12 20 L26 20Z" fill="#14fe14" fill-opacity="0.12" stroke="#14fe14" stroke-width="1"/>
+        </svg>
+        <button class="menu-btn" id="menu-ai" onclick="startGame('ai')">Против компьютера</button>
+        <button class="menu-btn" id="menu-pvp" onclick="startGame('pvp')">Против игрока</button>
+        <button class="menu-btn" id="menu-online" onclick="showOnlineMenu()" style="border-color:rgba(20,254,20,.4)">Онлайн</button>
+        <div id="menu-ver" style="font-size:9px;color:var(--vg);margin-top:8px;letter-spacing:1px">v2.0 // ПОСТАПОКАЛИПТИЧЕСКАЯ КАРТОЧНАЯ ИГРА</div>
+      </div>
 
-<!-- GAME SCREEN -->
-<div class="game" id="gameScreen" style="display:none;">
-  <button class="hamburger" id="btnHamburger">&#9776;</button>
+      <div id="game-screen" style="display:none;flex-direction:column;height:100%">
+        <div class="game-hud">
+          <div class="hud-round" id="hud-round">РАУНД 1/3</div>
+          <div class="hud-scores">
+            <span class="hud-score p2-s" id="hud-p2-score">0</span>
+            <span class="hud-vs">VS</span>
+            <span class="hud-score p1-s" id="hud-p1-score">0</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <div class="conn-status" id="conn-status">
+              <span class="conn-dot"></span>
+              <span id="conn-text">ONLINE</span>
+            </div>
+            <div class="hud-info" id="hud-info"></div>
+          </div>
+        </div>
+        <div class="weather-bar" id="weather-bar"></div>
+        <div class="opp-hand" id="opp-hand"></div>
+        <div class="game-field" id="game-field">
+          <div class="row melee-row" id="row-melee">
+            <div class="row-label" id="lbl-melee">БЛИЖНИЙ БОЙ</div>
+            <div class="row-power" id="rp-melee"></div>
+            <div class="row-content">
+              <div class="row-side" id="melee-p2"></div>
+              <div class="row-divider"></div>
+              <div class="row-side" id="melee-p1"></div>
+            </div>
+          </div>
+          <div class="row ranged-row" id="row-ranged">
+            <div class="row-label" id="lbl-ranged">ДАЛЬНИЙ БОЙ</div>
+            <div class="row-power" id="rp-ranged"></div>
+            <div class="row-content">
+              <div class="row-side" id="ranged-p2"></div>
+              <div class="row-divider"></div>
+              <div class="row-side" id="ranged-p1"></div>
+            </div>
+          </div>
+          <div class="row siege-row" id="row-siege">
+            <div class="row-label" id="lbl-siege">ОСАДА</div>
+            <div class="row-power" id="rp-siege"></div>
+            <div class="row-content">
+              <div class="row-side" id="siege-p2"></div>
+              <div class="row-divider"></div>
+              <div class="row-side" id="siege-p1"></div>
+            </div>
+          </div>
+        </div>
+        <div class="controls" id="controls">
+          <button class="ctrl-btn" id="btn-pass" onclick="handlePass()">ПАСС</button>
+          <span class="ctrl-turn" id="ctrl-turn"></span>
+          <span class="ctrl-info" id="ctrl-deck"></span>
+        </div>
+        <div class="hand-area" id="player-hand"></div>
+        <svg class="cityscape" viewBox="0 0 1000 30" preserveAspectRatio="none">
+          <path d="M0,30 L0,25 L30,25 L30,18 L35,18 L35,22 L45,22 L45,12 L50,12 L50,20 L55,20 L55,15 L60,15 L60,25 L80,25 L80,10 L85,10 L85,8 L88,8 L88,10 L95,10 L95,25 L120,25 L120,20 L130,20 L130,5 L135,5 L135,20 L145,20 L145,18 L160,18 L160,25 L200,25 L200,22 L210,22 L210,14 L215,14 L215,22 L230,22 L230,25 L260,25 L260,16 L265,16 L265,12 L270,12 L270,16 L275,16 L275,25 L310,25 L310,20 L320,20 L320,8 L325,8 L325,20 L340,20 L340,25 L380,25 L380,22 L390,22 L390,15 L400,15 L400,10 L405,10 L405,15 L410,15 L410,25 L450,25 L450,18 L455,18 L455,6 L460,6 L460,18 L475,18 L475,25 L510,25 L510,22 L520,22 L520,12 L530,12 L530,22 L540,22 L540,25 L580,25 L580,20 L590,20 L590,10 L600,10 L600,5 L605,5 L605,10 L610,10 L610,25 L650,25 L650,22 L660,22 L660,16 L670,16 L670,22 L680,22 L680,25 L720,25 L720,18 L730,18 L730,8 L735,8 L735,18 L750,18 L750,25 L790,25 L790,20 L800,20 L800,12 L810,12 L810,20 L820,20 L820,25 L860,25 L860,22 L870,22 L870,14 L880,14 L880,22 L890,22 L890,25 L930,25 L930,18 L940,18 L940,10 L950,10 L950,18 L960,18 L960,25 L1000,25 L1000,30Z" fill="#14fe14"/>
+        </svg>
+      </div>
 
-  <!-- Status Bar -->
-  <div class="status-bar">
-    <div id="roundInfo">ROUND 1</div>
-    <div class="round-scores">
-      <span style="color:var(--green-bright)" id="playerWins">0</span>
-      <span style="color:var(--text-dim)"> : </span>
-      <span style="color:var(--red)" id="aiWins">0</span>
+      <div class="overlay hidden" id="overlay-round-start">
+        <div class="overlay-title" id="ors-title"></div>
+        <div class="overlay-sub" id="ors-sub"></div>
+      </div>
+      <div class="overlay hidden" id="overlay-round-end">
+        <div class="overlay-title" id="ore-title"></div>
+        <div class="overlay-sub" id="ore-sub"></div>
+        <button class="overlay-btn" id="btn-next" onclick="afterRoundEnd()">Далее</button>
+      </div>
+      <div class="overlay hidden" id="overlay-game-end">
+        <div class="overlay-title" id="oge-title"></div>
+        <div class="overlay-sub" id="oge-sub"></div>
+        <button class="overlay-btn primary" id="btn-again" onclick="backToMenu()">Играть снова</button>
+      </div>
+      <div class="overlay hidden" id="overlay-handoff">
+        <div class="overlay-title" id="oh-title"></div>
+        <div class="overlay-sub" id="oh-sub"></div>
+        <button class="overlay-btn primary" id="btn-ready" onclick="confirmHandoff()">Готов</button>
+      </div>
+
+      <!-- ===== ONLINE MULTIPLAYER OVERLAYS ===== -->
+      <div class="overlay hidden" id="overlay-online-menu">
+        <div class="overlay-title" id="ol-title">СЕТЕВАЯ ИГРА</div>
+        <div class="online-sub" id="ol-sub">Играйте с другом на расстоянии</div>
+        <div style="display:flex;flex-direction:column;gap:12px;align-items:center;margin-top:12px">
+          <button class="overlay-btn" id="ol-create" onclick="createOnlineRoom()">СОЗДАТЬ КОМНАТУ</button>
+          <div class="online-divider">--- ИЛИ ---</div>
+          <div class="online-row">
+            <input class="online-input" id="ol-code" maxlength="4" placeholder="КОД" oninput="this.value=this.value.toUpperCase()">
+            <button class="overlay-btn" id="ol-join" onclick="joinOnlineRoom()" style="min-width:auto;padding:10px 14px">ОК</button>
+          </div>
+          <div class="online-err" id="ol-err"></div>
+        </div>
+        <button class="overlay-btn sm" onclick="hideOnlineMenu()" style="margin-top:12px">НАЗАД</button>
+      </div>
+
+      <div class="overlay hidden" id="overlay-waiting">
+        <div class="overlay-title" id="ow-title">КОМНАТА СОЗДАНА</div>
+        <div class="online-sub" id="ow-sub">Передайте код другу</div>
+        <div class="room-code-display" id="ow-code" onclick="copyCode()"></div>
+        <div class="online-wait" id="ow-wait">Ожидание игрока...</div>
+        <div class="online-wait" id="ow-copy" style="color:var(--g);display:none">Код скопирован!</div>
+        <button class="overlay-btn sm" onclick="cancelOnlineRoom()" style="margin-top:12px">ОТМЕНА</button>
+      </div>
+
+      <div class="overlay hidden" id="overlay-connecting">
+        <div class="overlay-title" id="oc-title"></div>
+        <div class="online-wait" id="oc-wait">Подключение...</div>
+      </div>
+
+      <div class="overlay hidden" id="overlay-disconnect">
+        <div class="overlay-title" style="color:var(--red)" id="od-title">СОЕДИНЕНИЕ ПОТЕРЯНО</div>
+        <div class="online-sub" id="od-sub">Противник отключился</div>
+        <button class="overlay-btn primary" onclick="onlineDisconnected()">В МЕНЮ</button>
+      </div>
+
     </div>
-    <div class="turn-indicator" id="turnIndicator">YOUR TURN</div>
   </div>
-
-  <!-- AI Hand -->
-  <div class="ai-hand">
-    <span class="ai-hand-label" id="aiHandLabel">ENEMY:</span>
-    <div id="aiHandCards"></div>
-    <span class="ai-hand-count" id="aiHandCount">(10)</span>
-  </div>
-
-  <!-- Board -->
-  <div class="board" id="board"></div>
-
-  <!-- Player Hand -->
-  <div class="player-hand-area">
-    <div class="player-hand" id="playerHand"></div>
-  </div>
-
-  <!-- Controls -->
-  <div class="controls">
-    <div class="score-display">
-      <span id="powerLabel">POWER:</span>
-      <span class="big" id="playerPower">0</span>
-      <span>vs</span>
-      <span class="big enemy" id="aiPower">0</span>
+  <div class="right-panel">
+    <div class="rp-title" id="rp-title">Система</div>
+    <button class="rp-btn" id="rp-back" onclick="backToMenu()">Назад</button>
+    <button class="rp-btn" id="rp-exit" onclick="exitGame()">Выход</button>
+    <button class="rp-btn lang-btn" id="rp-lang" onclick="toggleLang()">RU / EN</button>
+    <div class="rp-dial" title="NCR - New California Republic">
+      <svg viewBox="0 0 40 40" fill="none" stroke="#14fe14" stroke-width="1.2">
+        <circle cx="20" cy="20" r="18"/>
+        <path d="M20,4 L22.5,12.5 L31,12.5 L24.5,17.5 L27,26 L20,21 L13,26 L15.5,17.5 L9,12.5 L17.5,12.5Z" fill="#14fe14" fill-opacity="0.15"/>
+      </svg>
     </div>
-    <button class="btn btn-small btn-danger" id="btnPass">PASS</button>
-  </div>
-
-  <!-- Round End Overlay -->
-  <div class="round-overlay hidden" id="roundOverlay">
-    <div class="round-num" id="roundNum">ROUND 1</div>
-    <div class="round-result" id="roundResult">YOU WON!</div>
-    <div class="round-score" id="roundScore">12 : 8</div>
-    <button class="btn btn-small" id="btnContinue">CONTINUE</button>
-    <div class="round-hint" id="roundHint">tap anywhere to continue</div>
-  </div>
-
-  <!-- Match End -->
-  <div class="match-end hidden" id="matchEnd">
-    <div class="result-text" id="matchResult">VICTORY!</div>
-    <div class="result-score" id="matchScore">2 : 1</div>
-    <button class="btn" id="btnPlayAgain">PLAY AGAIN</button>
-    <button class="btn btn-small" id="btnBackToMenu">BACK TO MENU</button>
   </div>
 </div>
 
-<!-- Settings Panel -->
-<div class="settings-panel hidden" id="settingsPanel">
-  <h2>SCRAP</h2>
-  <div class="rules-text" id="settingsRules">
-    <span>&#9733;</span> Hero — immune to weather<br>
-    <span>&#9670;</span> Spy — to enemy field, draw 1 card<br>
-    <span>&#9835;</span> Morale — +1 to allies in row<br>
-    <span>&#9876;</span> Bond — power x number of copies<br>
-    <span>&#10010;</span> Medic — resurrects from graveyard<br>
-    <span>&#10052;&#9729;&#9731;</span> Weather — non-hero units = 1<br>
-    <span>&#9788;</span> Clear — removes all weather<br>
-    <span>&#128293;</span> Scorch — destroys strongest non-hero<br>
-    <span>&#8617;</span> Decoy — return weakest card to hand
-  </div>
-  <button class="btn btn-small" id="btnBackToGame">BACK</button>
-  <button class="btn btn-small btn-danger" id="btnPipboy">EXIT</button>
-</div>
+<!-- Firebase SDK loaded on demand -->
+<script>
+var fbLoaded=false;
+function loadFB(){
+  return new Promise(function(res,rej){
+    if(fbLoaded){res();return;}
+    var s=document.createElement('script');
+    s.src='https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js';
+    s.onload=function(){
+      var s2=document.createElement('script');
+      s2.src='https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js';
+      s2.onload=function(){fbLoaded=true;res();};
+      s2.onerror=rej;
+      document.head.appendChild(s2);
+    };
+    s.onerror=rej;
+    document.head.appendChild(s);
+  });
+}
+</script>
 
 <script>
-// ============================================================
-// LOCALIZATION
-// ============================================================
-let lang = localStorage.getItem('scrap-lang') || 'ru';
+'use strict';
 
-const T = {
-  'menu.desc':      { ru: 'Карточная дуэль на Пустошах. Сыграйте карту или пасуйте. Первый выигравший 2 раунда побеждает!', en: 'A card duel in the Wasteland. Play cards or pass. First to win 2 rounds wins!' },
-  'btn.start':      { ru: 'НАЧАТЬ ИГРУ', en: 'START GAME' },
-  'round':          { ru: 'РАУНД', en: 'ROUND' },
-  'your.turn':      { ru: 'ВАШ ХОД', en: 'YOUR TURN' },
-  'enemy.turn':     { ru: 'ХОД AI', en: 'AI TURN' },
-  'enemy':          { ru: 'ВРАГ:', en: 'ENEMY:' },
-  'you':            { ru: 'ВЫ:', en: 'YOU:' },
-  'ai':             { ru: 'ВРГ:', en: 'AI:' },
-  'pass':           { ru: 'ПАСС', en: 'PASS' },
-  'power':          { ru: 'СИЛА:', en: 'POWER:' },
-  'win':            { ru: 'ПОБЕДА!', en: 'VICTORY!' },
-  'lose':           { ru: 'ПОРАЖЕНИЕ!', en: 'DEFEAT!' },
-  'draw':           { ru: 'НИЧЬЯ!', en: 'DRAW!' },
-  'round.win':      { ru: 'ВЫ ВЫИГРАЛИ РАУНД!', en: 'YOU WON THE ROUND!' },
-  'round.lose':     { ru: 'ПРОТИВНИК ВЫИГРАЛ РАУНД', en: 'OPPONENT WON THE ROUND' },
-  'round.draw':     { ru: 'РАУНД — НИЧЬЯ', en: 'ROUND DRAW' },
-  'play.again':     { ru: 'ИГРАТЬ СНОВА', en: 'PLAY AGAIN' },
-  'back.menu':      { ru: 'В МЕНЮ', en: 'BACK TO MENU' },
-  'siege':          { ru: 'ОСАДА', en: 'SIEGE' },
-  'ranged':         { ru: 'ДАЛЬНИЙ БОЙ', en: 'RANGED' },
-  'close':          { ru: 'БЛИЖНИЙ БОЙ', en: 'CLOSE COMBAT' },
-  'exit':           { ru: 'ГЛАВНОЕ МЕНЮ', en: 'MAIN MENU' },
-  'back':           { ru: 'НАЗАД', en: 'BACK' },
-  'rounds':         { ru: 'Раундов:', en: 'Rounds:' },
-  'continue':       { ru: 'ПРОДОЛЖИТЬ', en: 'CONTINUE' },
-  'next.round':     { ru: 'СЛЕДУЮЩИЙ РАУНД', en: 'NEXT ROUND' },
-  'saved':          { ru: 'СОХРАНЕНО', en: 'SAVED' },
-  'game.restored':  { ru: 'ИГРА ВОССТАНОВЛЕНА', en: 'GAME RESTORED' },
-  'enemy.passed':   { ru: 'ПРОТИВНИК ПАСОВАЛ', en: 'OPPONENT PASSED' },
-  'tap.continue':   { ru: 'нажмите чтобы продолжить', en: 'tap anywhere to continue' },
+// =====================================================
+//  FIREBASE CONFIG — ЗАМЕНИТЕ НА СВОИ ДАННЫЕ
+//  Как настроить:
+//  1. Зайдите на https://console.firebase.google.com
+//  2. Создайте проект (Create a project)
+//  3. В меню слева: Realtime Database -> Create Database
+//  4. Выберите "Start in test mode"
+//  5. В настройках проекта (Project settings) -> General -> Your apps -> Web app
+//  6. Скопируйте конфиг и вставьте ниже
+// =====================================================
+var FB_CONFIG={
+  apiKey:"AIzaSyA8SLf0EwE6lolFciDt6cQK8U3LJm4YLLw",
+  authDomain:"scrap-game.firebaseapp.com",
+  databaseURL:"https://scrap-game-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"scrap-game",
+  storageBucket:"scrap-game.firebasestorage.app",
+  messagingSenderId:"554589841261",
+  appId:"1:554589841261:web:db3d45ddbb52fcc3cd5c64"
 };
 
-function t(key) { return T[key]?.[lang] || T[key]?.en || key; }
-
-// ============================================================
-// CARD NAMES
-// ============================================================
-const CN = {
-  'Militia':    { ru: 'Ополчение', en: 'Militia' },
-  'Footman':    { ru: 'Пехотинец', en: 'Footman' },
-  'Commando':   { ru: 'Командос', en: 'Commando' },
-  'Knight':     { ru: 'Рыцарь', en: 'Knight' },
-  'Sergeant':   { ru: 'Сержант', en: 'Sergeant' },
-  'Valkyrie':   { ru: 'Валькирия', en: 'Valkyrie' },
-  'Drummer':    { ru: 'Барабанщик', en: 'Drummer' },
-  'Medic':      { ru: 'Медик', en: 'Medic' },
-  'Hunter':     { ru: 'Охотник', en: 'Hunter' },
-  'Revenant':   { ru: 'Призрак', en: 'Revenant' },
-  'Cassandra':  { ru: 'Кассандра', en: 'Cassandra' },
-  'Scout':      { ru: 'Разведчик', en: 'Scout' },
-  'Spy':        { ru: 'Шпион', en: 'Spy' },
-  'Ballista':   { ru: 'Баллиста', en: 'Ballista' },
-  'Trebuchet':  { ru: 'Требушет', en: 'Trebuchet' },
-  'R.Ballista': { ru: 'Т.Баллиста', en: 'R.Ballista' },
-  'Frost':      { ru: 'Мороз', en: 'Frost' },
-  'Fog':        { ru: 'Туман', en: 'Fog' },
-  'Rain':       { ru: 'Дождь', en: 'Rain' },
-  'Clear':      { ru: 'Ясно', en: 'Clear' },
-  'Scorch':     { ru: 'Испепел.', en: 'Scorch' },
-  'Decoy':      { ru: 'Приманка', en: 'Decoy' },
-  'Soldier':    { ru: 'Солдат', en: 'Soldier' },
-  'Infantry':   { ru: 'Инфантерия', en: 'Infantry' },
-  'Legion':     { ru: 'Легион', en: 'Legion' },
-  'Cavalry':    { ru: 'Кавалерия', en: 'Cavalry' },
-  'Armored':    { ru: 'Бронетема', en: 'Armored' },
-  'Vargas':     { ru: 'Варгас', en: 'Vargas' },
-  'Elite':      { ru: 'Элита', en: 'Elite' },
-  'Brigade':    { ru: 'Бригада', en: 'Brigade' },
-  'Emissary':   { ru: 'Эмиссар', en: 'Emissary' },
-  'Mangonel':   { ru: 'Мангонел', en: 'Mangonel' },
-  'R.Trebuchet':{ ru: 'Т.Требушет', en: 'R.Treb.' },
+// ========== LANGUAGE ==========
+let lang='ru';
+const TXT={
+ru:{
+system:'Система',back:'Назад',exit:'Выход',
+menuSub:'Карточная игра выживших',menuAi:'Против компьютера',menuPvp:'Против игрока',
+menuOnline:'Онлайн',menuVer:'v2.0 // ПОСТАПОКАЛИПТИЧЕСКАЯ КАРТОЧНАЯ ИГРА',
+round:'РАУНД',rounds:'Раунды',
+rnSub:['','Ничья не раскрыта','Всё решится сейчас','Последний шанс'],
+rWin:'ПОБЕДА В РАУНДЕ!',rLose:'ПОРАЖЕНИЕ В РАУНДЕ',rDraw:'НИЧЬЯ В РАУНДЕ',
+gWin:'ПОБЕДА В ИГРЕ!',gLose:'ПОРАЖЕНИЕ',gDraw:'НИЧЬЯ',
+clear:'ЯСНО',frost:'ЯДЕРНАЯ ЗИМА',fog:'РАД.ТУМАН',rain:'КИСЛ.ДОЖДЬ',
+melee:'БЛИЖНИЙ БОЙ',ranged:'ДАЛЬНИЙ БОЙ',siege:'ОСАДА',
+pass:'ПАСС',deck:'КОЛОДА',passed:'(ПАСС)',
+next:'Далее',again:'Играть снова',ready:'Готов',
+handoff:'ПЕРЕДАЙТЕ УСТРОЙСТВО',player:'ИГРОК',computer:'КОМПЬЮТЕР',
+wWinter:'Зима',wFog:'Туман',wRain:'Дождь',wClear:'Ясно',wStorm:'Шторм',
+olTitle:'СЕТЕВАЯ ИГРА',olSub:'Играйте с другом на расстоянии',
+olCreate:'СОЗДАТЬ КОМНАТУ',olJoin:'ПОДКЛЮЧИТЬСЯ',
+olCode:'КОД',olBack:'НАЗАД',
+owTitle:'КОМНАТА СОЗДАНА',owSub:'Передайте код другу',
+owWait:'Ожидание игрока...',owCancel:'ОТМЕНА',owCopied:'Код скопирован!',
+odTitle:'СОЕДИНЕНИЕ ПОТЕРЯНО',odSub:'Противник отключился',odMenu:'В МЕНЮ',
+errNoFB:'Firebase не настроен. Смотрите инструкции в коде (FB_CONFIG).',
+errRoomNF:'Комната не найдена',errRoomFull:'Комната занята',
+errCodeLen:'Введите 4-значный код',
+connecting:'Подключение...',
+online:'ОНЛАЙН',offline:'ОФФЛАЙН',
+fbNotConfigured:'FIREBASE НЕ НАСТРОЕН\n\nОткройте код игры (index.html)\nи заполните FB_CONFIG\n\nИнструкция:\n1. console.firebase.google.com\n2. Создайте проект\n3. Realtime Database -> Test mode\n4. Project Settings -> Web app\n5. Скопируйте конфиг',
+},
+en:{
+system:'System',back:'Back',exit:'Exit',
+menuSub:'Survivors Card Game',menuAi:'VS Computer',menuPvp:'VS Player',
+menuOnline:'Online',menuVer:'v2.0 // POST-APOCALYPTIC CARD GAME',
+round:'ROUND',rounds:'Rounds',
+rnSub:['','Nothing revealed yet','Everything on the line','Last chance'],
+rWin:'ROUND WON!',rLose:'ROUND LOST',rDraw:'ROUND DRAW',
+gWin:'VICTORY!',gLose:'DEFEAT',gDraw:'DRAW',
+clear:'CLEAR',frost:'NUCLEAR WINTER',fog:'RAD. FOG',rain:'ACID RAIN',
+melee:'MELEE',ranged:'RANGED',siege:'SIEGE',
+pass:'PASS',deck:'DECK',passed:'(PASS)',
+next:'Next',again:'Play Again',ready:'Ready',
+handoff:'PASS THE DEVICE',player:'PLAYER',computer:'COMPUTER',
+wWinter:'Winter',wFog:'Fog',wRain:'Rain',wClear:'Clear',wStorm:'Storm',
+olTitle:'ONLINE GAME',olSub:'Play with a friend remotely',
+olCreate:'CREATE ROOM',olJoin:'JOIN',
+olCode:'CODE',olBack:'BACK',
+owTitle:'ROOM CREATED',owSub:'Share this code with your friend',
+owWait:'Waiting for player...',owCancel:'CANCEL',owCopied:'Code copied!',
+odTitle:'CONNECTION LOST',odSub:'Opponent disconnected',odMenu:'MENU',
+errNoFB:'Firebase not configured. See FB_CONFIG in code.',
+errRoomNF:'Room not found',errRoomFull:'Room is full',
+errCodeLen:'Enter 4-character code',
+connecting:'Connecting...',
+online:'ONLINE',offline:'OFFLINE',
+fbNotConfigured:'FIREBASE NOT CONFIGURED\n\nOpen the game code (index.html)\nand fill in FB_CONFIG\n\nInstructions:\n1. console.firebase.google.com\n2. Create a project\n3. Realtime Database -> Test mode\n4. Project Settings -> Web app\n5. Copy config',
+}
 };
-function cname(c) { return CN[c.name]?.[lang] || c.name; }
+function t(k){return TXT[lang][k]||k;}
 
-// ============================================================
-// DECK DEFINITIONS
-// ============================================================
-const SYM = { none:'', hero:'★', spy:'◈', morale:'♪', bond:'⚔', medic:'✚' };
-
-// Card art icon map
-const ART_ICONS = {
-  close: '⚔',
-  ranged: '➶',
-  siege: '⚒',
-  hero: '★',
-  spy: '◈',
-  medic: '✚',
-  morale: '♪',
-  bond: '⚔',
-  'weather-close': '❄',
-  'weather-ranged': '☁',
-  'weather-siege': '☂',
-  scorch: '🔥',
-  clear: '☀',
-  decoy: '↩',
+const CNAMES={
+'Мародёр':'Scavenger','Берсерк':'Berserker','Телохранитель':'Bodyguard',
+'Мутант-громила':'Mutant Brute','Уличный боец':'Street Fighter',
+'Снайпер':'Sniper','Стрелок':'Shooter','Охотник':'Hunter',
+'Метатель ножей':'Knife Thrower','Рейнджер':'Ranger',
+'Ржавая пушка':'Rusty Cannon','Самодельная мортира':'Homemade Mortar',
+'Ракетница':'Rocket Launcher','Самопал':'Handmade Gun','Броневик':'Armored Car',
+'Бандит-шпион':'Bandit Spy','Полевой врач':'Field Medic','Командир':'Commander',
+'Ядерная зима':'Nuclear Winter','Радиационный туман':'Rad. Fog',
+'Кислотный дождь':'Acid Rain','Рассвет':'Dawn','Огненный шторм':'Firestorm','Ветеран':'Veteran',
+'Дикарь':'Savage','Каннибал':'Cannibal','Охранник':'Guard',
+'Гуля':'Ghoul','Наёмник':'Mercenary',
+'Разведчик':'Scout','Митральерщик':'Machine Gunner',
+'Снайпер-наёмник':'Merc Sniper','Партизан':'Partisan','Стрелок-ветеран':'Vet. Shooter',
+'Миномёт':'Mortar','Огнемёт':'Flamethrower','Танк-самоделка':'DIY Tank',
+'Гранатомёт':'Grenade Lnchr.','БТР':'APC',
+'Шпион-диверсант':'Saboteur Spy','Доктор':'Doctor','Генерал':'General',
+'Мутагенный туман':'Mutagenic Fog','Морозная буря':'Frost Storm',
+'Кислотные осадки':'Acid Precip.','Прозрение':'Clarity','Напалм':'Napalm','Полковник':'Colonel',
 };
+function cn(c){return lang==='en'&&CNAMES[c.name]?CNAMES[c.name]:c.name;}
 
-function getCardArtClass(c) {
-  if (c.ability === 'hero') return 'hero-art';
-  if (c.ability === 'spy') return 'spy-art';
-  if (c.ability === 'medic') return 'medic-art';
-  if (c.ability === 'morale') return 'morale-art';
-  if (c.ability === 'bond') return 'bond-art';
-  if (c.isScorch) return 'scorch-art';
-  if (c.isClear) return 'clear-art';
-  if (c.isDecoy) return 'decoy-art';
-  if (c.isWeather) return 'weather-art';
-  // Default: row-based
-  if (c.row === 'close') return 'close-art';
-  if (c.row === 'ranged') return 'ranged-art';
-  if (c.row === 'siege') return 'siege-art';
-  return '';
+function toggleLang(){
+  lang=lang==='ru'?'en':'ru';
+  applyLang();
+  if(G&&G.phase!=='menu')render();
+}
+function applyLang(){
+  const $=id=>document.getElementById(id);
+  $('rp-title').textContent=t('system');
+  $('rp-back').textContent=t('back');
+  $('rp-exit').textContent=t('exit');
+  $('rp-lang').textContent=lang==='ru'?'RU / EN':'EN / RU';
+  $('menu-sub').textContent=t('menuSub');
+  $('menu-ai').textContent=t('menuAi');
+  $('menu-pvp').textContent=t('menuPvp');
+  $('menu-online').textContent=t('menuOnline');
+  $('menu-ver').textContent=t('menuVer');
+  $('lbl-melee').textContent=t('melee');
+  $('lbl-ranged').textContent=t('ranged');
+  $('lbl-siege').textContent=t('siege');
+  $('btn-pass').textContent=t('pass');
+  $('btn-next').textContent=t('next');
+  $('btn-again').textContent=t('again');
+  $('btn-ready').textContent=t('ready');
+  $('ol-title').textContent=t('olTitle');
+  $('ol-sub').textContent=t('olSub');
+  $('ol-create').textContent=t('olCreate');
+  $('ol-join').textContent=t('olJoin');
+  $('ol-code').placeholder=t('olCode');
+  document.title=lang==='ru'?'SCRAP — Карточная игра выживших':'SCRAP — Survivors Card Game';
 }
 
-function getCardArtIcon(c) {
-  if (c.ability === 'hero') return '★';
-  if (c.ability === 'spy') return '◈';
-  if (c.ability === 'medic') return '✚';
-  if (c.ability === 'morale') return '♪';
-  if (c.ability === 'bond') return '⚔';
-  if (c.isScorch) return '🔥';
-  if (c.isClear) return '☀';
-  if (c.isDecoy) return '↩';
-  if (c.isWeather) {
-    if (c.row === 'close') return '❄';
-    if (c.row === 'ranged') return '☁';
-    return '☂';
-  }
-  // Default: row-based
-  if (c.row === 'close') return '⚔';
-  if (c.row === 'ranged') return '➶';
-  if (c.row === 'siege') return '⚒';
-  return '';
-}
+// ========== SVG ICONS ==========
+const I={
+melee:`<svg viewBox="0 0 36 36" fill="none" stroke="#14fe14" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="8" r="3.5"/><line x1="18" y1="11.5" x2="18" y2="23"/><line x1="11" y1="15" x2="25" y2="15"/><line x1="13" y1="33" x2="15.5" y2="23"/><line x1="23" y1="33" x2="20.5" y2="23"/><line x1="26" y1="12" x2="32" y2="4" stroke-width="2"/></svg>`,
+melee2:`<svg viewBox="0 0 36 36" fill="none" stroke="#14fe14" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="8" r="3.5"/><line x1="18" y1="11.5" x2="18" y2="23"/><line x1="11" y1="15" x2="25" y2="15"/><line x1="13" y1="33" x2="15.5" y2="23"/><line x1="23" y1="33" x2="20.5" y2="23"/><rect x="2" y="2" width="5" height="18" rx="1.5" transform="rotate(-25 4 11)"/></svg>`,
+ranged:`<svg viewBox="0 0 36 36" fill="none" stroke="#14fe14" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="8" r="3.5"/><line x1="13" y1="11.5" x2="13" y2="25"/><line x1="7" y1="15" x2="19" y2="15"/><line x1="8" y1="33" x2="10.5" y2="25"/><line x1="18" y1="33" x2="15.5" y2="25"/><line x1="19" y1="12" x2="33" y2="12" stroke-width="2"/><rect x="31" y="10" width="3" height="4" rx=".5"/></svg>`,
+sniper:`<svg viewBox="0 0 36 36" fill="none" stroke="#14fe14" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="8" r="3.5"/><line x1="11" y1="11.5" x2="11" y2="25"/><line x1="5" y1="15" x2="17" y2="15"/><line x1="6" y1="33" x2="8.5" y2="25"/><line x1="16" y1="33" x2="13.5" y2="25"/><line x1="17" y1="12" x2="34" y2="12" stroke-width="1.8"/><line x1="17" y1="10" x2="17" y2="14"/><circle cx="17" cy="12" r="1.5" fill="#14fe14"/></svg>`,
+knife:`<svg viewBox="0 0 36 36" fill="none" stroke="#14fe14" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="8" r="3.5"/><line x1="13" y1="11.5" x2="13" y2="25"/><line x1="7" y1="15" x2="19" y2="15"/><line x1="8" y1="33" x2="10.5" y2="25"/><line x1="18" y1="33" x2="15.5" y2="25"/><path d="M19,12 L26,4" stroke-width="2"/><path d="M26,4 L30,2" stroke-width="1.5"/></svg>`,
+cannon:`<svg viewBox="0 0 36 36" fill="none" stroke="#14fe14" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="18" width="18" height="5" rx="2"/><line x1="20" y1="18" x2="32" y2="13" stroke-width="2"/><circle cx="6" cy="30" r="3"/><circle cx="16" cy="30" r="3"/><line x1="4" y1="28" x2="6" y2="23"/><line x1="18" y1="28" x2="16" y2="23"/></svg>`,
+mortar:`<svg viewBox="0 0 36 36" fill="none" stroke="#14fe14" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6,32 L12,18 L28,18" stroke-width="2"/><rect x="8" y="16" width="18" height="3" rx="1"/><path d="M16,18 L16,10" stroke-width="2"/><circle cx="16" cy="8" r="2.5"/><line x1="6" y1="32" x2="9" y2="30"/><line x1="28" y1="32" x2="25" y2="30"/></svg>`,
+rocket:`<svg viewBox="0 0 36 36" fill="none" stroke="#14fe14" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="20" width="22" height="5" rx="2"/><line x1="26" y1="20" x2="33" y2="16" stroke-width="1.8"/><polygon points="33,16 33,13 35,14.5" fill="#14fe14" stroke="none"/><line x1="26" y1="25" x2="33" y2="29" stroke-width="1.8"/><polygon points="33,29 33,32 35,30.5" fill="#14fe14" stroke="none"/><circle cx="6" cy="31" r="2.5"/><circle cx="24" cy="31" r="2.5"/></svg>`,
+vehicle:`<svg viewBox="0 0 36 36" fill="none" stroke="#14fe14" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="16" width="26" height="9" rx="3"/><rect x="6" y="12" width="7" height="5" rx="1"/><circle cx="7" cy="27" r="2.5"/><circle cx="23" cy="27" r="2.5"/><line x1="30" y1="18" x2="34" y2="14" stroke-width="1.5"/></svg>`,
+tank:`<svg viewBox="0 0 36 36" fill="none" stroke="#14fe14" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="14" width="28" height="9" rx="2.5"/><rect x="8" y="8" width="10" height="7" rx="2"/><line x1="18" y1="11.5" x2="34" y2="7" stroke-width="2.2"/><circle cx="7" cy="25.5" r="3"/><circle cx="15" cy="25.5" r="3"/><circle cx="23" cy="25.5" r="3"/></svg>`,
+spy:`<svg viewBox="0 0 36 36" fill="none" stroke="#14fe14" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18,4 C10,4 4,10 4,18 C4,26 10,32 18,32 C26,32 32,26 32,18 C32,10 26,4 18,4Z"/><circle cx="18" cy="18" r="6"/><circle cx="18" cy="18" r="2.5" fill="#14fe14"/></svg>`,
+medic:`<svg viewBox="0 0 36 36" fill="none" stroke="#14fe14" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="11"/><line x1="18" y1="11" x2="18" y2="25" stroke-width="2.5"/><line x1="11" y1="18" x2="25" y2="18" stroke-width="2.5"/></svg>`,
+commander:`<svg viewBox="0 0 36 36" fill="none" stroke="#14fe14" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="11"/><polyline points="11,22 18,14 25,22"/><line x1="18" y1="14" x2="18" y2="29" stroke-width="2"/></svg>`,
+hero_star:`<svg viewBox="0 0 36 36" fill="none" stroke="#14fe14" stroke-width="1.5" stroke-linejoin="round"><path d="M18,2 L21.5,13 L33,13 L24,20 L27,31 L18,24 L9,31 L12,20 L3,13 L14.5,13Z"/></svg>`,
+frost:`<svg viewBox="0 0 36 36" fill="none" stroke="#88aaff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="2" x2="18" y2="34"/><line x1="2" y1="18" x2="34" y2="18"/><line x1="6" y1="6" x2="30" y2="30"/><line x1="30" y1="6" x2="6" y2="30"/><line x1="18" y1="2" x2="14" y2="7"/><line x1="18" y1="2" x2="22" y2="7"/><line x1="18" y1="34" x2="14" y2="29"/><line x1="18" y1="34" x2="22" y2="29"/></svg>`,
+fog:`<svg viewBox="0 0 36 36" fill="none" stroke="#aa88ff" stroke-width="1.5" stroke-linecap="round"><path d="M4,14 Q10,8 18,13 Q26,18 32,11"/><path d="M2,20 Q8,14 16,19 Q24,24 34,17"/><path d="M6,26 Q12,20 20,25 Q28,30 34,23"/></svg>`,
+rain:`<svg viewBox="0 0 36 36" fill="none" stroke="#aaff88" stroke-width="1.5" stroke-linecap="round"><path d="M6,12 Q6,4 14,4 Q22,4 22,12 Q30,12 30,18 Q30,24 22,24 L6,24 Q0,24 0,18 Q0,12 6,12Z"/><line x1="8" y1="28" x2="6" y2="34"/><line x1="14" y1="28" x2="12" y2="34"/><line x1="20" y1="28" x2="18" y2="34"/><line x1="26" y1="28" x2="24" y2="34"/></svg>`,
+sun:`<svg viewBox="0 0 36 36" fill="none" stroke="#14fe14" stroke-width="1.5" stroke-linecap="round"><circle cx="18" cy="18" r="7"/><line x1="18" y1="5" x2="18" y2="8"/><line x1="18" y1="28" x2="18" y2="31"/><line x1="5" y1="18" x2="8" y2="18"/><line x1="28" y1="18" x2="31" y2="18"/><line x1="8" y1="8" x2="10.5" y2="10.5"/><line x1="25.5" y1="25.5" x2="28" y2="28"/><line x1="8" y1="28" x2="10.5" y2="25.5"/><line x1="25.5" y1="10.5" x2="28" y2="8"/></svg>`,
+scorch:`<svg viewBox="0 0 36 36" fill="none" stroke="#ff6622" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18,34 C18,34 6,26 6,16 C6,10 10,4 18,4 C26,4 30,10 30,16 C30,26 18,34 18,34Z"/><path d="M18,20 L16,27"/><path d="M18,20 L20,27"/><path d="M18,20 L11,24"/><path d="M18,20 L25,24"/><path d="M18,20 L13,14"/><path d="M18,20 L23,14"/></svg>`,
+gun:`<svg viewBox="0 0 36 36" fill="none" stroke="#14fe14" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4,22 L4,18 L14,18 L14,14 L18,12 L26,12 L26,18 L14,18"/><rect x="7" y="18" width="2" height="5" rx=".5"/><line x1="26" y1="12" x2="30" y2="10" stroke-width="1.5"/></svg>`,
+grenade:`<svg viewBox="0 0 36 36" fill="none" stroke="#14fe14" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="18" cy="22" rx="9" ry="9"/><line x1="18" y1="13" x2="18" y2="7"/><circle cx="18" cy="6" r="2"/><line x1="18" y1="15" x2="22" y2="11"/></svg>`,
+machinegun:`<svg viewBox="0 0 36 36" fill="none" stroke="#14fe14" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="16" width="22" height="3.5" rx="1"/><line x1="24" y1="14" x2="33" y2="14" stroke-width="2"/><line x1="24" y1="22" x2="33" y2="22" stroke-width="2"/><rect x="10" y="19.5" width="5" height="7" rx="1"/><line x1="24" y1="14" x2="24" y2="22" stroke-width="2"/></svg>`,
+backcard:`<svg viewBox="0 0 30 30" fill="none" stroke="#14fe14" stroke-width="0.8"><rect x="2" y="2" width="26" height="26" rx="3"/><path d="M15,6 L15,24 M6,15 L24,15" stroke-width="0.5"/><text x="15" y="18" text-anchor="middle" fill="#14fe14" font-size="8" stroke="none">S</text></svg>`
+};
 
-function mkPlayerDeck() {
+// ========== CARD DEFINITIONS ==========
+function mkPlayerDeck(){
   return [
-    { id:'p1',  name:'Militia',   power:1, row:'close',  ability:'none' },
-    { id:'p2',  name:'Militia',   power:1, row:'close',  ability:'none' },
-    { id:'p3',  name:'Footman',   power:3, row:'close',  ability:'none' },
-    { id:'p4',  name:'Commando',  power:3, row:'close',  ability:'bond' },
-    { id:'p5',  name:'Commando',  power:3, row:'close',  ability:'bond' },
-    { id:'p6',  name:'Commando',  power:3, row:'close',  ability:'bond' },
-    { id:'p7',  name:'Knight',    power:5, row:'close',  ability:'none' },
-    { id:'p8',  name:'Sergeant',  power:4, row:'close',  ability:'none' },
-    { id:'p9',  name:'Valkyrie',  power:4, row:'close',  ability:'hero' },
-    { id:'p10', name:'Drummer',   power:1, row:'close',  ability:'morale' },
-    { id:'p23', name:'Medic',     power:3, row:'close',  ability:'medic' },
-    { id:'p11', name:'Hunter',    power:6, row:'ranged', ability:'none' },
-    { id:'p12', name:'Revenant',  power:5, row:'ranged', ability:'none' },
-    { id:'p13', name:'Cassandra', power:5, row:'ranged', ability:'hero' },
-    { id:'p14', name:'Scout',     power:2, row:'ranged', ability:'none' },
-    { id:'p24', name:'Spy',       power:0, row:'ranged', ability:'spy' },
-    { id:'p15', name:'Ballista',  power:4, row:'siege',  ability:'none' },
-    { id:'p16', name:'Trebuchet', power:6, row:'siege',  ability:'none' },
-    { id:'p17', name:'R.Ballista',power:8, row:'siege',  ability:'none' },
-    { id:'p18', name:'Frost',     power:0, row:'close',  ability:'none', isWeather:true },
-    { id:'p19', name:'Fog',       power:0, row:'ranged', ability:'none', isWeather:true },
-    { id:'p20', name:'Rain',      power:0, row:'siege',  ability:'none', isWeather:true },
-    { id:'p21', name:'Clear',     power:0, row:'siege',  ability:'none', isClear:true },
-    { id:'p22', name:'Scorch',    power:0, row:'close',  ability:'none', isScorch:true },
-    { id:'p25', name:'Decoy',     power:0, row:'close',  ability:'none', isDecoy:true },
+    {id:'p1',name:'Мародёр',str:3,row:'melee',ability:null,icon:'melee'},
+    {id:'p2',name:'Мародёр',str:3,row:'melee',ability:null,icon:'melee'},
+    {id:'p3',name:'Берсерк',str:6,row:'melee',ability:null,icon:'melee2'},
+    {id:'p4',name:'Берсерк',str:6,row:'melee',ability:null,icon:'melee2'},
+    {id:'p5',name:'Телохранитель',str:5,row:'melee',ability:'morale',icon:'commander'},
+    {id:'p6',name:'Мутант-громила',str:7,row:'melee',ability:'hero',icon:'melee'},
+    {id:'p7',name:'Уличный боец',str:4,row:'melee',ability:null,icon:'melee2'},
+    {id:'p8',name:'Уличный боец',str:4,row:'melee',ability:null,icon:'melee2'},
+    {id:'p9',name:'Снайпер',str:5,row:'ranged',ability:null,icon:'sniper'},
+    {id:'p10',name:'Снайпер',str:5,row:'ranged',ability:null,icon:'sniper'},
+    {id:'p11',name:'Стрелок',str:3,row:'ranged',ability:null,icon:'ranged'},
+    {id:'p12',name:'Стрелок',str:3,row:'ranged',ability:null,icon:'ranged'},
+    {id:'p13',name:'Охотник',str:4,row:'ranged',ability:null,icon:'ranged'},
+    {id:'p14',name:'Метатель ножей',str:3,row:'ranged',ability:null,icon:'knife'},
+    {id:'p15',name:'Рейнджер',str:6,row:'ranged',ability:'hero',icon:'sniper'},
+    {id:'p16',name:'Ржавая пушка',str:6,row:'siege',ability:null,icon:'cannon'},
+    {id:'p17',name:'Ржавая пушка',str:6,row:'siege',ability:null,icon:'cannon'},
+    {id:'p18',name:'Самодельная мортира',str:8,row:'siege',ability:null,icon:'mortar'},
+    {id:'p19',name:'Самодельная мортира',str:8,row:'siege',ability:null,icon:'mortar'},
+    {id:'p20',name:'Ракетница',str:10,row:'siege',ability:'hero',icon:'rocket'},
+    {id:'p21',name:'Самопал',str:3,row:'siege',ability:null,icon:'gun'},
+    {id:'p22',name:'Самопал',str:3,row:'siege',ability:null,icon:'gun'},
+    {id:'p23',name:'Броневик',str:5,row:'siege',ability:null,icon:'vehicle'},
+    {id:'p24',name:'Броневик',str:5,row:'siege',ability:null,icon:'vehicle'},
+    {id:'p25',name:'Бандит-шпион',str:0,row:null,ability:'spy',icon:'spy'},
+    {id:'p26',name:'Бандит-шпион',str:0,row:null,ability:'spy',icon:'spy'},
+    {id:'p27',name:'Полевой врач',str:2,row:null,ability:'medic',icon:'medic'},
+    {id:'p28',name:'Полевой врач',str:2,row:null,ability:'medic',icon:'medic'},
+    {id:'p29',name:'Командир',str:0,row:null,ability:'morale',icon:'commander'},
+    {id:'p30',name:'Ядерная зима',str:0,row:null,ability:'weather',weatherType:'frost',icon:'frost'},
+    {id:'p31',name:'Радиационный туман',str:0,row:null,ability:'weather',weatherType:'fog',icon:'fog'},
+    {id:'p32',name:'Кислотный дождь',str:0,row:null,ability:'weather',weatherType:'rain',icon:'rain'},
+    {id:'p33',name:'Рассвет',str:0,row:null,ability:'clear',icon:'sun'},
+    {id:'p34',name:'Огненный шторм',str:0,row:null,ability:'scorch',icon:'scorch'},
+    {id:'p35',name:'Ветеран',str:8,row:null,ability:'hero',icon:'hero_star'},
   ];
 }
-function mkAIDeck() {
+
+function mkAIDeck(){
   return [
-    { id:'a1',  name:'Soldier',    power:1, row:'close',  ability:'none' },
-    { id:'a2',  name:'Soldier',    power:1, row:'close',  ability:'none' },
-    { id:'a3',  name:'Infantry',   power:3, row:'close',  ability:'none' },
-    { id:'a4',  name:'Legion',     power:3, row:'close',  ability:'bond' },
-    { id:'a5',  name:'Legion',     power:3, row:'close',  ability:'bond' },
-    { id:'a6',  name:'Legion',     power:3, row:'close',  ability:'bond' },
-    { id:'a7',  name:'Cavalry',    power:5, row:'close',  ability:'none' },
-    { id:'a8',  name:'Armored',    power:4, row:'close',  ability:'none' },
-    { id:'a9',  name:'Vargas',     power:4, row:'close',  ability:'hero' },
-    { id:'a10', name:'Drummer',    power:1, row:'close',  ability:'morale' },
-    { id:'a23', name:'Medic',      power:3, row:'close',  ability:'medic' },
-    { id:'a11', name:'Elite',      power:6, row:'ranged', ability:'none' },
-    { id:'a12', name:'Brigade',    power:5, row:'ranged', ability:'none' },
-    { id:'a13', name:'Emissary',   power:5, row:'ranged', ability:'hero' },
-    { id:'a14', name:'Scout',      power:2, row:'ranged', ability:'none' },
-    { id:'a24', name:'Spy',        power:0, row:'ranged', ability:'spy' },
-    { id:'a15', name:'Mangonel',   power:4, row:'siege',  ability:'none' },
-    { id:'a16', name:'Trebuchet',  power:6, row:'siege',  ability:'none' },
-    { id:'a17', name:'R.Trebuchet',power:8, row:'siege',  ability:'none' },
-    { id:'a18', name:'Frost',      power:0, row:'close',  ability:'none', isWeather:true },
-    { id:'a19', name:'Fog',        power:0, row:'ranged', ability:'none', isWeather:true },
-    { id:'a20', name:'Rain',       power:0, row:'siege',  ability:'none', isWeather:true },
-    { id:'a21', name:'Clear',      power:0, row:'siege',  ability:'none', isClear:true },
-    { id:'a22', name:'Scorch',     power:0, row:'close',  ability:'none', isScorch:true },
-    { id:'a25', name:'Decoy',      power:0, row:'close',  ability:'none', isDecoy:true },
+    {id:'a1',name:'Дикарь',str:3,row:'melee',ability:null,icon:'melee'},
+    {id:'a2',name:'Дикарь',str:3,row:'melee',ability:null,icon:'melee'},
+    {id:'a3',name:'Каннибал',str:6,row:'melee',ability:null,icon:'melee2'},
+    {id:'a4',name:'Каннибал',str:6,row:'melee',ability:null,icon:'melee2'},
+    {id:'a5',name:'Охранник',str:5,row:'melee',ability:'morale',icon:'commander'},
+    {id:'a6',name:'Гуля',str:7,row:'melee',ability:'hero',icon:'melee'},
+    {id:'a7',name:'Наёмник',str:4,row:'melee',ability:null,icon:'melee2'},
+    {id:'a8',name:'Наёмник',str:4,row:'melee',ability:null,icon:'melee2'},
+    {id:'a9',name:'Разведчик',str:5,row:'ranged',ability:null,icon:'ranged'},
+    {id:'a10',name:'Разведчик',str:5,row:'ranged',ability:null,icon:'ranged'},
+    {id:'a11',name:'Митральерщик',str:3,row:'ranged',ability:null,icon:'machinegun'},
+    {id:'a12',name:'Митральерщик',str:3,row:'ranged',ability:null,icon:'machinegun'},
+    {id:'a13',name:'Снайпер-наёмник',str:4,row:'ranged',ability:null,icon:'sniper'},
+    {id:'a14',name:'Партизан',str:3,row:'ranged',ability:null,icon:'ranged'},
+    {id:'a15',name:'Стрелок-ветеран',str:6,row:'ranged',ability:'hero',icon:'sniper'},
+    {id:'a16',name:'Миномёт',str:6,row:'siege',ability:null,icon:'mortar'},
+    {id:'a17',name:'Миномёт',str:6,row:'siege',ability:null,icon:'mortar'},
+    {id:'a18',name:'Огнемёт',str:8,row:'siege',ability:null,icon:'gun'},
+    {id:'a19',name:'Огнемёт',str:8,row:'siege',ability:null,icon:'gun'},
+    {id:'a20',name:'Танк-самоделка',str:10,row:'siege',ability:'hero',icon:'tank'},
+    {id:'a21',name:'Гранатомёт',str:3,row:'siege',ability:null,icon:'grenade'},
+    {id:'a22',name:'Гранатомёт',str:3,row:'siege',ability:null,icon:'grenade'},
+    {id:'a23',name:'БТР',str:5,row:'siege',ability:null,icon:'vehicle'},
+    {id:'a24',name:'БТР',str:5,row:'siege',ability:null,icon:'vehicle'},
+    {id:'a25',name:'Шпион-диверсант',str:0,row:null,ability:'spy',icon:'spy'},
+    {id:'a26',name:'Шпион-диверсант',str:0,row:null,ability:'spy',icon:'spy'},
+    {id:'a27',name:'Доктор',str:2,row:null,ability:'medic',icon:'medic'},
+    {id:'a28',name:'Доктор',str:2,row:null,ability:'medic',icon:'medic'},
+    {id:'a29',name:'Генерал',str:0,row:null,ability:'morale',icon:'commander'},
+    {id:'a30',name:'Мутагенный туман',str:0,row:null,ability:'weather',weatherType:'fog',icon:'fog'},
+    {id:'a31',name:'Морозная буря',str:0,row:null,ability:'weather',weatherType:'frost',icon:'frost'},
+    {id:'a32',name:'Кислотные осадки',str:0,row:null,ability:'weather',weatherType:'rain',icon:'rain'},
+    {id:'a33',name:'Прозрение',str:0,row:null,ability:'clear',icon:'sun'},
+    {id:'a34',name:'Напалм',str:0,row:null,ability:'scorch',icon:'scorch'},
+    {id:'a35',name:'Полковник',str:8,row:null,ability:'hero',icon:'hero_star'},
   ];
 }
 
-// ============================================================
-// GAME LOGIC
-// ============================================================
-function shuffle(a) {
-  a = [...a];
-  for (let i = a.length-1; i > 0; i--) {
-    const j = Math.floor(Math.random()*(i+1));
-    [a[i],a[j]] = [a[j],a[i]];
-  }
-  return a;
-}
+// ========== GAME STATE ==========
+let G=null, mode='ai', aiTmr=null;
 
-const ROWS = ['siege','ranged','close'];
-const ROW_LABELS = () => ({ siege: t('siege'), ranged: t('ranged'), close: t('close') });
-
-let G; // game state
-
-function calcRow(cards, weather) {
-  if (!cards.length) return 0;
-  let score = 0;
-  const morale = cards.filter(c=>c.ability==='morale').length;
-  for (const c of cards) {
-    if (c.isWeather||c.isScorch||c.isDecoy||c.isClear) continue;
-    let p = c.power;
-    if (weather && c.ability!=='hero') p = 1;
-    if (c.ability==='bond') p = p * cards.filter(x=>x.name===c.name).length;
-    if (c.ability!=='hero' && c.ability!=='morale') p += morale;
-    score += p;
-  }
-  return score;
-}
-
-function totalScore(board, weather) {
-  return ROWS.reduce((s,r)=> s + calcRow(board[r], weather[r]), 0);
-}
-
-function initGame() {
-  const pd = shuffle(mkPlayerDeck());
-  const ad = shuffle(mkAIDeck());
-  G = {
-    phase: 'menu',
-    round: 1,
-    pWins: 0, aWins: 0,
-    pDeck: pd.slice(10), aDeck: ad.slice(10),
-    pHand: pd.slice(0,10), aHand: ad.slice(0,10),
-    pBoard: {close:[],ranged:[],siege:[]},
-    aBoard: {close:[],ranged:[],siege:[]},
-    weather: {close:false,ranged:false,siege:false},
-    pGrave: [], aGrave: [],
-    pPassed: false, aPassed: false,
-    pTurn: Math.random() < 0.5,
-    msg: '', lastWinner: '',
+function newGame(){
+  G={
+    phase:'menu',round:0,cur:'p1',first:null,
+    weather:{frost:false,fog:false,rain:false},
+    passed:{p1:false,p2:false},
+    decks:{p1:[],p2:[]},hands:{p1:[],p2:[]},
+    field:{melee:{p1:[],p2:[]},ranged:{p1:[],p2:[]},siege:{p1:[],p2:[]}},
+    discard:{p1:[],p2:[]},
+    rw:{p1:0,p2:0},
+    names:{p1:'ИГРОК 1',p2:''},
+    pvpReady:false,
   };
-  saveGame();
 }
 
-function newRound() {
-  if (G.pWins>=2 || G.aWins>=2 || G.round>=3) {
-    const w = G.pWins>G.aWins ? 'player' : G.aWins>G.pWins ? 'ai' : 'draw';
-    G.phase = 'matchEnd';
-    G.msg = w==='player' ? t('win') : w==='ai' ? t('lose') : t('draw');
-    saveGame();
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=0|Math.random()*(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;}
+function cp(c){return Object.assign({},c);}
+
+// ========== START ==========
+function startGame(m){
+  if(m==='online'){showOnlineMenu();return;}
+  mode=m;
+  newGame();
+  G.names.p2=m==='ai'?t('computer'):(lang==='ru'?'ИГРОК 2':'PLAYER 2');
+  G.decks.p1=shuffle(mkPlayerDeck().map(cp));
+  G.decks.p2=shuffle(m==='ai'?mkAIDeck():mkPlayerDeck().map(c=>Object.assign(cp(c),{id:'q'+c.id}))).map(cp);
+  G.first=Math.random()<.5?'p1':'p2';
+  document.getElementById('menu-screen').style.display='none';
+  document.getElementById('game-screen').style.display='flex';
+  beginRound(1);
+}
+
+function beginRound(rn){
+  G.round=rn;
+  G.weather={frost:false,fog:false,rain:false};
+  G.passed={p1:false,p2:false};
+  for(let r of['melee','ranged','siege']){G.field[r].p1=[];G.field[r].p2=[];}
+  const dc=rn===1?10:rn===2?2:1;
+  draw('p1',dc);draw('p2',dc);
+  G.cur=rn===1?G.first:(G.first==='p1'?'p2':'p1');
+  showOv('overlay-round-start');
+  document.getElementById('ors-title').textContent=t('round')+' '+rn;
+  const sub=t('rnSub');
+  document.getElementById('ors-sub').textContent=sub[rn]||'';
+  setTimeout(()=>{
+    hideOv('overlay-round-start');
+    G.phase='playing';
+    render();
+    afterTurnSwitch();
+  },1400);
+}
+
+function draw(p,n){for(let i=0;i<n;i++){if(G.decks[p].length&&G.hands[p].length<15)G.hands[p].push(G.decks[p].pop());}}
+
+// ========== PLAY CARD ==========
+function playCard(p,idx){
+  if(G.phase!=='playing'||G.passed[p]||p!==G.cur)return;
+  const c=G.hands[p][idx];
+  if(!c)return;
+  G.hands[p].splice(idx,1);
+  applyEffect(p,c);
+  afterPlay();
+}
+
+function applyEffect(p,c){
+  const opp=p==='p1'?'p2':'p1';
+  if(c.ability==='weather'){
+    if(c.weatherType)G.weather[c.weatherType]=true;
+    G.discard[p].push(c);return;
+  }
+  if(c.ability==='clear'){
+    G.weather={frost:false,fog:false,rain:false};
+    G.discard[p].push(c);return;
+  }
+  if(c.ability==='scorch'){
+    let mx=0,dest=[];
+    for(let s of['p1','p2'])for(let r of['melee','ranged','siege'])for(let u of G.field[r][s]){
+      const pw=effPow(u,r);
+      if(pw>mx){mx=pw;dest=[{r,s,u}];}else if(pw===mx&&pw>0)dest.push({r,s,u});
+    }
+    for(let d of dest)if(d.u.ability!=='hero'){
+      const i=G.field[d.r][d.s].indexOf(d.u);
+      if(i>=0){G.field[d.r][d.s].splice(i,1);G.discard[p].push(d.u);}
+    }
+    G.discard[p].push(c);return;
+  }
+  if(c.ability==='spy'){
+    const rows=['melee','ranged','siege'];
+    const tr=rows[0|Math.random()*3];
+    G.field[tr][opp].push(c);
+    draw(p,2);return;
+  }
+  if(c.ability==='medic'){
+    const rows=['melee','ranged','siege'];
+    const tr=rows[0|Math.random()*3];
+    G.field[tr][p].push(c);
+    const rev=G.discard[p].filter(x=>x.row&&x.ability!=='hero'&&x.ability!=='spy'&&x.ability!=='medic');
+    if(rev.length){
+      const rv=rev[0|Math.random()*rev.length];
+      G.discard[p].splice(G.discard[p].indexOf(rv),1);
+      G.field[rv.row][p].push(rv);
+    }
     return;
   }
-  let fp;
-  if (G.lastWinner==='ai') fp=false;
-  else if (G.lastWinner==='player') fp=true;
-  else fp = Math.random()<0.5;
-
-  G.phase = 'playing';
-  G.round++;
-  G.pBoard = {close:[],ranged:[],siege:[]};
-  G.aBoard = {close:[],ranged:[],siege:[]};
-  G.weather = {close:false,ranged:false,siege:false};
-  G.pPassed = false; G.aPassed = false;
-  G.pTurn = fp; G.msg = '';
-  saveGame();
-}
-
-function playCard(cardId, isPlayer) {
-  const hand = isPlayer ? G.pHand : G.aHand;
-  const ci = hand.findIndex(c=>c.id===cardId);
-  if (ci===-1) return;
-  const card = hand[ci];
-  if (isPlayer) G.pHand = G.pHand.filter(c=>c.id!==cardId);
-  else G.aHand = G.aHand.filter(c=>c.id!==cardId);
-
-  // Shallow copy arrays we'll modify
-  const pb = { close:[...G.pBoard.close], ranged:[...G.pBoard.ranged], siege:[...G.pBoard.siege] };
-  const ab = { close:[...G.aBoard.close], ranged:[...G.aBoard.ranged], siege:[...G.aBoard.siege] };
-  const w = {...G.weather};
-  let pg = [...G.pGrave], ag = [...G.aGrave];
-  let msg = '';
-
-  if (card.isWeather) {
-    w[card.row] = true;
-    msg = cname(card) + '!';
-  } else if (card.isClear) {
-    G.weather = w; w.close=false; w.ranged=false; w.siege=false;
-    msg = cname(card) + '!';
-  } else if (card.isScorch) {
-    let maxP = 0;
-    const all = [...pb.close,...pb.ranged,...pb.siege,...ab.close,...ab.ranged,...ab.siege]
-      .filter(c=>c.ability!=='hero'&&!c.isWeather&&c.power>0);
-    for (const u of all) maxP = Math.max(maxP, u.power);
-    for (const r of ROWS) {
-      pb[r] = pb[r].filter(c=>{ if(c.ability==='hero'||c.power<maxP) return true; pg.push(c); return false; });
-      ab[r] = ab[r].filter(c=>{ if(c.ability==='hero'||c.power<maxP) return true; ag.push(c); return false; });
-    }
-    msg = cname(card) + '!';
-  } else if (card.isDecoy) {
-    const board = isPlayer ? G.pBoard : G.aBoard;
-    let weakest=null, min=Infinity;
-    for (const r of ROWS) for (const c of board[r]) {
-      if (c.ability!=='hero'&&c.ability!=='spy'&&c.power<min&&c.power>0) { weakest=c; min=c.power; }
-    }
-    if (weakest) {
-      const b = isPlayer ? pb : ab;
-      const h = isPlayer ? G.pHand : G.aHand;
-      for (const r of ROWS) {
-        const i = b[r].findIndex(c=>c.id===weakest.id);
-        if (i>=0) { b[r].splice(i,1); h.push(weakest); break; }
-      }
-      msg = cname(card) + '!';
-    }
-  } else if (card.ability==='spy') {
-    if (isPlayer) { ab[card.row].push(card); if(G.pDeck.length){G.pHand.push(G.pDeck.shift());G.pDeck=G.pDeck;} }
-    else { pb[card.row].push(card); if(G.aDeck.length){G.aHand.push(G.aDeck.shift());G.aDeck=G.aDeck;} }
-    msg = SYM.spy;
-  } else if (card.ability==='medic') {
-    if (isPlayer) pb[card.row].push(card); else ab[card.row].push(card);
-    const grave = isPlayer ? G.pGrave : G.aGrave;
-    const units = grave.filter(c=>!c.isWeather&&!c.isScorch&&!c.isDecoy&&!c.isClear);
-    if (units.length) {
-      units.sort((a,b)=>b.power-a.power);
-      const rv = units[0];
-      if (isPlayer) { pb[rv.row].push(rv); pg=pg.filter(c=>c.id!==rv.id); }
-      else { ab[rv.row].push(rv); ag=ag.filter(c=>c.id!==rv.id); }
-      msg = SYM.medic;
-    }
+  if((c.ability==='hero'||c.ability==='morale')&&!c.row){
+    const rows=['melee','ranged','siege'];
+    c.row=rows[0|Math.random()*3];
+  }
+  if(c.row){
+    G.field[c.row][p].push(c);
   } else {
-    if (isPlayer) pb[card.row].push(card); else ab[card.row].push(card);
+    const rows=['melee','ranged','siege'];
+    G.field[rows[0|Math.random()*3]][p].push(c);
   }
-
-  G.pBoard=pb; G.aBoard=ab; G.weather=w; G.pGrave=pg; G.aGrave=ag;
-  G.pTurn = !isPlayer; G.msg = msg;
-  saveGame();
 }
 
-function doPass(isPlayer) {
-  if (isPlayer) G.pPassed=true; else G.aPassed=true;
-  G.pTurn = !isPlayer;
-  saveGame();
+// ========== POWER CALC ==========
+function effPow(c,row){
+  if(c.ability==='spy')return 0;
+  let pw=c.str;
+  if(c.ability!=='hero'){
+    if(row==='melee'&&G.weather.frost)pw=1;
+    if(row==='ranged'&&G.weather.fog)pw=1;
+    if(row==='siege'&&G.weather.rain)pw=1;
+  }
+  return pw;
 }
 
-function checkEnd() {
-  if (!G.pPassed || !G.aPassed) return;
-  const ps = totalScore(G.pBoard, G.weather);
-  const as = totalScore(G.aBoard, G.weather);
-  if (ps>as) { G.pWins++; G.lastWinner='player'; }
-  else if (as>ps) { G.aWins++; G.lastWinner='ai'; }
-  else { G.lastWinner='draw'; }
-
-  if (G.pWins>=2 || G.aWins>=2 || G.round>=3) {
-    G.phase='matchEnd';
-    G.msg = G.pWins>G.aWins ? t('win') : G.aWins>G.pWins ? t('lose') : t('draw');
-  } else {
-    G.phase='roundEnd';
-  }
-  saveGame();
+function bondBonus(c,row,side){
+  if(c.ability==='hero'||c.ability==='spy')return 0;
+  const cnt=G.field[row][side].filter(x=>x.name===c.name&&x!==c&&x.ability!=='hero'&&x.ability!=='spy').length;
+  return cnt*2;
 }
 
-// ============================================================
-// SAVE / LOAD
-// ============================================================
-function saveGame() {
-  if (!G || G.phase === 'menu') { localStorage.removeItem('scrap-save'); return; }
-  try { localStorage.setItem('scrap-save', JSON.stringify(G)); } catch(e) {}
+function moraleBoost(row,side){
+  return G.field[row][side].filter(x=>x.ability==='morale').length;
 }
 
-function loadGame() {
-  try {
-    const data = localStorage.getItem('scrap-save');
-    if (!data) return false;
-    G = JSON.parse(data);
-    if (!G || !G.phase) return false;
-    if (G.phase === 'roundEnd' || G.phase === 'playing') {
-      $('menuScreen').classList.add('hidden');
-      $('gameScreen').style.display = 'flex';
-      render();
-      flash(t('game.restored'));
-      // If it's AI's turn, schedule AI
-      if (G.phase==='playing' && !G.pTurn) scheduleAI();
-      return true;
-    }
-    if (G.phase === 'matchEnd') {
-      $('menuScreen').classList.add('hidden');
-      $('gameScreen').style.display = 'flex';
-      render();
-      return true;
-    }
-  } catch(e) { localStorage.removeItem('scrap-save'); }
-  return false;
+function rowPow(row,side){
+  let t=0;
+  const mb=moraleBoost(row,side);
+  for(let c of G.field[row][side]){
+    if(c.ability==='morale'){t+=c.str;continue;}
+    let pw=effPow(c,row);
+    pw+=bondBonus(c,row,side);
+    if(c.ability!=='hero')pw+=mb;
+    t+=pw;
+  }
+  return t;
 }
 
-// ============================================================
-// AI
-// ============================================================
-function aiChoose() {
-  const h = G.aHand;
-  if (!h.length) return null;
-  const ps = totalScore(G.pBoard, G.weather);
-  const as = totalScore(G.aBoard, G.weather);
-  const diff = ps - as;
+function totalPow(side){return rowPow('melee',side)+rowPow('ranged',side)+rowPow('siege',side);}
 
-  const units = h.filter(c=>!c.isWeather&&!c.isScorch&&!c.isDecoy&&!c.isClear&&c.ability!=='spy');
-  const weathers = h.filter(c=>c.isWeather);
-  const specials = h.filter(c=>c.isScorch||c.isDecoy||c.isClear);
-  const spies = h.filter(c=>c.ability==='spy');
-  const medics = h.filter(c=>c.ability==='medic');
+// ========== TURN FLOW ==========
+function afterPlay(){
+  if(!G.hands[G.cur].length)G.passed[G.cur]=true;
+  if(G.passed.p1&&G.passed.p2){endRound();return;}
+  let tries=0;
+  do{
+    G.cur=G.cur==='p1'?'p2':'p1';
+    if(!G.hands[G.cur].length)G.passed[G.cur]=true;
+    tries++;
+  }while(G.passed[G.cur]&&tries<4);
+  if(G.passed.p1&&G.passed.p2){endRound();return;}
+  render();
+  afterTurnSwitch();
 
-  if (G.pPassed && as > ps) {
-    return units.length ? units.sort((a,b)=>a.power-b.power)[0].id : null;
+  // Online: sync state to Firebase after every move
+  if(mode==='online')syncToFirebase();
+}
+
+function afterTurnSwitch(){
+  if(mode==='ai'&&G.cur==='p2'&&!G.passed.p2){
+    scheduleAI();
+  } else if(mode==='pvp'){
+    const pnum=G.cur==='p1'?1:2;
+    showHandoff(pnum);
   }
-  if (diff > 25 && units.length) return units.sort((a,b)=>b.power-a.power)[0].id;
-  if (diff > 10) {
-    if (weathers.length) {
-      const wc = weathers[0];
-      const prp = G.pBoard[wc.row].reduce((s,c)=>s+c.power,0);
-      const arp = G.aBoard[wc.row].filter(c=>c.ability==='hero').reduce((s,c)=>s+c.power,0);
-      if (prp > arp+3) return wc.id;
-    }
-    if (units.length) return units.sort((a,b)=>b.power-a.power)[0].id;
+  // Online: Firebase listener handles state updates, no action needed here
+}
+
+function handlePass(){
+  if(G.phase!=='playing')return;
+  if(mode==='ai'&&G.cur==='p2')return;
+  if(mode==='online'&&G.cur!==mySide)return;
+  if(G.passed[G.cur])return;
+  G.passed[G.cur]=true;
+  afterPlay();
+}
+
+function endRound(){
+  G.phase='roundEnd';
+  clearAI();
+  const s1=totalPow('p1'),s2=totalPow('p2');
+  let title,info;
+  if(s1>s2){G.rw.p1++;title=t('rWin');info=s1+' \u2014 '+s2;}
+  else if(s2>s1){G.rw.p2++;title=t('rLose');info=s1+' \u2014 '+s2;}
+  else{title=t('rDraw');info=s1+' \u2014 '+s2;}
+  render();
+  setTimeout(()=>{
+    showOv('overlay-round-end');
+    document.getElementById('ore-title').textContent=title;
+    document.getElementById('ore-sub').textContent=info+' | '+t('rounds')+': '+G.rw.p1+' \u2014 '+G.rw.p2;
+  },500);
+}
+
+function afterRoundEnd(){
+  hideOv('overlay-round-end');
+
+  // Online: only host controls round transitions
+  if(mode==='online'&&mySide!=='p1'){
+    return; // Guest waits for host to advance
   }
-  if (diff > 0) {
-    if (units.length) { const s=units.sort((a,b)=>b.power-a.power); return s[Math.min(1,s.length-1)].id; }
-    if (medics.length && G.aGrave.length) return medics[0].id;
+
+  if(G.rw.p1>=2){endGame('p1');return;}
+  if(G.rw.p2>=2){endGame('p2');return;}
+  if(G.round>=3){
+    if(G.rw.p1>G.rw.p2)endGame('p1');
+    else if(G.rw.p2>G.rw.p1)endGame('p2');
+    else endGame('draw');
+    return;
   }
-  if (as >= ps) {
-    if (specials.some(c=>c.isScorch)) {
-      const sc = specials.find(c=>c.isScorch);
-      const apu = [...G.pBoard.close,...G.pBoard.ranged,...G.pBoard.siege].filter(c=>c.ability!=='hero');
-      const aau = [...G.aBoard.close,...G.aBoard.ranged,...G.aBoard.siege].filter(c=>c.ability!=='hero');
-      if (apu.length) {
-        const mp = Math.max(...apu.map(c=>c.power));
-        const ma = aau.length ? Math.max(...aau.map(c=>c.power)) : 0;
-        if (mp > ma) return sc.id;
+  for(let r of['melee','ranged','siege'])for(let s of['p1','p2'])G.discard[s].push(...G.field[r][s]);
+  beginRound(G.round+1);
+
+  // Online: sync new round state
+  if(mode==='online')syncToFirebase();
+}
+
+function endGame(w){
+  G.phase='gameEnd';
+  let title,info;
+  if(w==='p1'){title=t('gWin');info=G.rw.p1+' \u2014 '+G.rw.p2;}
+  else if(w==='p2'){title=t('gLose');info=G.rw.p1+' \u2014 '+G.rw.p2;}
+  else{title=t('gDraw');info=G.rw.p1+' \u2014 '+G.rw.p2;}
+  showOv('overlay-game-end');
+  document.getElementById('oge-title').textContent=title;
+  document.getElementById('oge-sub').textContent=info;
+
+  // Online: sync and cleanup
+  if(mode==='online'){
+    syncToFirebase();
+    setTimeout(()=>{
+      if(fbRoomRef){
+        fbRoomRef.child('status').set('done');
       }
-    }
-    if (units.length) return units.sort((a,b)=>a.power-b.power)[0].id;
-    if (spies.length && h.length<=4) return spies[0].id;
-    if (medics.length && G.aGrave.length) return medics[0].id;
+    },2000);
   }
-  if (units.length) return units[0].id;
-  if (weathers.length) return weathers[0].id;
-  if (spies.length) return spies[0].id;
-  if (medics.length) return medics[0].id;
-  if (specials.length) return specials[0].id;
-  return null;
 }
 
-function aiShouldPass() {
-  const ps = totalScore(G.pBoard, G.weather);
-  const as = totalScore(G.aBoard, G.weather);
-  if (G.pPassed) {
-    if (as > ps) return true;
-    if (as === ps && G.aHand.length <= 2) return true;
+// ========== AI ==========
+function scheduleAI(){
+  clearAI();
+  aiTmr=setTimeout(()=>{
+    if(G.phase!=='playing'||G.cur!=='p2')return;
+    aiPlay();
+  },700+Math.floor(Math.random()*400));
+}
+function clearAI(){if(aiTmr){clearTimeout(aiTmr);aiTmr=null;}}
+
+function aiPlay(){
+  if(G.phase!=='playing'||G.cur!=='p2')return;
+  const myP=totalPow('p2'),opP=totalPow('p1'),diff=opP-myP;
+  const h=G.hands.p2;
+  if(diff<=-20&&h.length<=3){G.passed.p2=true;afterPlay();return;}
+  if(diff<=-15&&h.length<=2){G.passed.p2=true;afterPlay();return;}
+  if(h.length===0){G.passed.p2=true;afterPlay();return;}
+  let ci=-1;
+  if(diff>=-5){
+    const hurtF=G.weather.frost&&G.field.melee.p2.some(c=>c.ability!=='hero');
+    const hurtG=G.weather.fog&&G.field.ranged.p2.some(c=>c.ability!=='hero');
+    const hurtR=G.weather.rain&&G.field.siege.p2.some(c=>c.ability!=='hero');
+    if(hurtF||hurtG||hurtR){ci=h.findIndex(c=>c.ability==='clear');}
+  }
+  if(ci<0)ci=h.findIndex(c=>c.ability==='spy');
+  if(ci<0&&diff>=15){
+    let best=-1,bv=-1;
+    h.forEach((c,i)=>{if(c.ability==='spy')return;const s=c.str||0;if(s>bv){bv=s;best=i;}});
+    if(best>=0)ci=best;
+  }
+  if(ci<0){
+    const om=G.field.melee.p1.filter(c=>c.ability!=='hero').length;
+    const or2=G.field.ranged.p1.filter(c=>c.ability!=='hero').length;
+    const os=G.field.siege.p1.filter(c=>c.ability!=='hero').length;
+    let wi=-1;
+    if(om>=2&&!G.weather.frost)wi=h.findIndex(c=>c.ability==='weather'&&c.weatherType==='frost');
+    if(wi<0&&or2>=2&&!G.weather.fog)wi=h.findIndex(c=>c.ability==='weather'&&c.weatherType==='fog');
+    if(wi<0&&os>=2&&!G.weather.rain)wi=h.findIndex(c=>c.ability==='weather'&&c.weatherType==='rain');
+    if(wi>=0)ci=wi;
+  }
+  if(ci<0){
+    let mx=0;
+    for(let r of['melee','ranged','siege'])for(let c of G.field[r].p1){const e=effPow(c,r);if(e>mx)mx=e;}
+    if(mx>=8){const si=h.findIndex(c=>c.ability==='scorch');if(si>=0)ci=si;}
+  }
+  if(ci<0){
+    const mi=h.findIndex(c=>c.ability==='medic');
+    if(mi>=0&&G.discard.p2.some(c=>c.row&&c.str>=4&&c.ability!=='hero'&&c.ability!=='spy'))ci=mi;
+  }
+  if(ci<0){
+    let best=-1,bv=-1;
+    h.forEach((c,i)=>{
+      if(c.ability==='spy'||c.ability==='weather'||c.ability==='clear'||c.ability==='scorch')return;
+      const s=c.str||0;if(s>bv){bv=s;best=i;}
+    });
+    if(best>=0)ci=best;
+  }
+  if(ci<0)ci=h.length-1;
+  if(h.length<=1&&diff<=0){G.passed.p2=true;afterPlay();return;}
+  playCard('p2',ci);
+}
+
+// ========== PvP HANDOFF ==========
+function showHandoff(pnum){
+  showOv('overlay-handoff');
+  document.getElementById('oh-title').textContent=t('handoff');
+  document.getElementById('oh-sub').textContent='\u2192 '+t('player')+' '+pnum;
+}
+function confirmHandoff(){
+  hideOv('overlay-handoff');
+  render();
+}
+
+// ========== RENDER ==========
+function render(){
+  if(!G||G.phase==='menu')return;
+
+  // HUD
+  document.getElementById('hud-round').textContent=t('round')+' '+G.round+'/3';
+  const s1=totalPow('p1'),s2=totalPow('p2');
+  const e1=document.getElementById('hud-p1-score');
+  const e2=document.getElementById('hud-p2-score');
+  e1.textContent=s1;e2.textContent=s2;
+
+  // In online mode, color scores based on mySide
+  if(mode==='online'){
+    e1.className='hud-score p1-s'+(s1>=s2?' winning-score':s1<s2?' losing-score':'');
+    e2.className='hud-score p2-s'+(s2>=s1?' winning-score':s2<s1?' losing-score':'');
+  } else {
+    e1.className='hud-score p1-s'+(s1>=s2?' winning-score':s1<s2?' losing-score':'');
+    e2.className='hud-score p2-s'+(s2>=s1?' winning-score':s2<s1?' losing-score':'');
+  }
+
+  document.getElementById('hud-info').textContent=t('rounds')+': '+G.rw.p1+' \u2014 '+G.rw.p2;
+
+  // Weather
+  const wb=document.getElementById('weather-bar');
+  let wh='';
+  if(G.weather.frost)wh+='<span class="weather-tag frost">'+t('frost')+'</span>';
+  if(G.weather.fog)wh+='<span class="weather-tag fog">'+t('fog')+'</span>';
+  if(G.weather.rain)wh+='<span class="weather-tag rain">'+t('rain')+'</span>';
+  if(!wh)wh='<span style="font-size:7px;color:var(--vg)">'+t('clear')+'</span>';
+  wb.innerHTML=wh;
+
+  // Determine display sides
+  let bottomSide,topSide;
+  if(mode==='online'){
+    bottomSide=mySide;
+    topSide=mySide==='p1'?'p2':'p1';
+  } else if(mode==='pvp'){
+    bottomSide=G.cur;
+    topSide=G.cur==='p1'?'p2':'p1';
+  } else {
+    bottomSide='p1';
+    topSide='p2';
+  }
+
+  // Opponent hand (top)
+  const oh=document.getElementById('opp-hand');
+  let oh2='';
+  const oppHandLen=mode==='online'?oppHandCount:G.hands[topSide].length;
+  for(let i=0;i<oppHandLen;i++)oh2+=I.backcard;
+  if(G.passed[topSide])oh2+='<span style="font-size:7px;color:var(--vg);margin-left:4px">'+t('pass')+'</span>';
+  oh.innerHTML=oh2;
+
+  // Field
+  for(let row of['melee','ranged','siege']){
+    for(let side of['p2','p1']){
+      const el=document.getElementById(row+'-'+side);
+      let h='';
+      for(let c of G.field[row][side])h+=cardHTML(c,false);
+      el.innerHTML=h;
+    }
+    const rp=document.getElementById('rp-'+row);
+    rp.textContent=rowPow(row,'p1')+' | '+rowPow(row,'p2');
+  }
+
+  // Controls
+  let canPlay;
+  if(mode==='online')canPlay=(G.cur===mySide&&!G.passed[mySide]);
+  else if(mode==='ai')canPlay=(G.cur==='p1'&&!G.passed.p1);
+  else canPlay=true;
+  const btn=document.getElementById('btn-pass');
+  btn.disabled=!canPlay||G.passed[G.cur];
+  document.getElementById('ctrl-deck').textContent=t('deck')+': '+G.decks[bottomSide].length;
+  document.getElementById('ctrl-turn').textContent=
+    (bottomSide==='p1'?(lang==='ru'?'ИГРОК 1':'PLAYER 1'):G.names.p2)+
+    (G.passed[bottomSide]?' '+t('passed'):'');
+
+  // My hand (bottom)
+  const ph=document.getElementById('player-hand');
+  let ph2='';
+  G.hands[bottomSide].forEach((c,i)=>{
+    ph2+=canPlay&&!G.passed[bottomSide]?
+      '<span onclick="onCardClick('+i+')">'+cardHTML(c,true)+'</span>':
+      cardHTML(c,false);
+  });
+  if(G.passed[bottomSide])ph2+='<span style="font-size:8px;color:var(--vg);margin-left:6px;white-space:nowrap">'+t('pass')+'</span>';
+  ph.innerHTML=ph2;
+}
+
+function onCardClick(i){
+  if(G.phase!=='playing')return;
+  if(mode==='ai'&&G.cur!=='p1')return;
+  if(mode==='online'&&G.cur!==mySide)return;
+  const p=mode==='online'?mySide:(mode==='pvp'?G.cur:'p1');
+  playCard(p,i);
+}
+
+function cardHTML(c,playable){
+  const hero=c.ability==='hero';
+  let cls='card';
+  if(hero)cls+=' hero-card';
+  if(c.ability==='spy')cls+=' ability-spy';
+  if(c.ability==='medic')cls+=' ability-medic';
+  if(c.ability==='morale')cls+=' ability-morale';
+  if(c.ability==='weather'||c.ability==='clear'||c.ability==='scorch')cls+=' weather-card';
+  if(playable)cls+=' playable';
+  let badge='';
+  if(hero)badge='<div class="card-badge"><svg viewBox="0 0 10 10" fill="#d0a030"><polygon points="5,1 6.5,3.5 9,4 7,6 7.5,9 5,7.5 2.5,9 3,6 1,4 3.5,3.5"/></svg></div>';
+  const icon=I[c.icon]||I.melee;
+  let bottom='';
+  if(c.ability==='weather'){bottom='<div class="card-weather-type">'+({frost:t('wWinter'),fog:t('wFog'),rain:t('wRain')}[c.weatherType]||'')+'</div>';}
+  else if(c.ability==='clear')bottom='<div class="card-weather-type">'+t('wClear')+'</div>';
+  else if(c.ability==='scorch')bottom='<div class="card-weather-type">'+t('wStorm')+'</div>';
+  else if(c.str>0)bottom='<div class="card-str">'+c.str+'</div>';
+  else bottom='<div class="card-str zero">0</div>';
+  const dn=cn(c);
+  return '<div class="'+cls+'" title="'+dn+'">'+badge+'<div class="card-name">'+dn+'</div><div class="card-icon">'+icon+'</div>'+bottom+'</div>';
+}
+
+// ========== OVERLAY HELPERS ==========
+function showOv(id){document.getElementById(id).classList.remove('hidden');}
+function hideOv(id){document.getElementById(id).classList.add('hidden');}
+
+function backToMenu(){
+  clearAI();
+  if(mode==='online')cleanupOnline();
+  newGame();
+  mode='ai';
+  document.getElementById('game-screen').style.display='none';
+  document.getElementById('menu-screen').style.display='flex';
+  for(let id of['overlay-round-start','overlay-round-end','overlay-game-end','overlay-handoff',
+    'overlay-online-menu','overlay-waiting','overlay-connecting','overlay-disconnect'])hideOv(id);
+}
+
+function exitGame(){backToMenu();}
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape')backToMenu();});
+
+// =================================================================
+//  FIREBASE ONLINE MULTIPLAYER
+// =================================================================
+
+var fbDB=null, fbRoomRef=null, mySide=null; // mySide='p1'(host) or 'p2'(guest)
+var onlineVer=0, oppHandCount=0, onlineRoomCode='';
+
+// Check if Firebase config is filled
+function isFBConfigured(){
+  return FB_CONFIG.databaseURL&&FB_CONFIG.databaseURL.length>10;
+}
+
+// Initialize Firebase
+async function initFirebase(){
+  if(fbDB)return true;
+  try{
+    await loadFB();
+    if(!firebase||!firebase.database){
+      console.error('Firebase SDK not loaded');
+      return false;
+    }
+    firebase.initializeApp(FB_CONFIG);
+    fbDB=firebase.database();
+    return true;
+  }catch(e){
+    console.error('Firebase init error:',e);
     return false;
   }
-  if (as > ps+20 && G.aHand.length<=2) return true;
-  if (as > ps+10 && G.aHand.length<=1) return true;
-  return false;
 }
 
-// ============================================================
-// RENDERING
-// ============================================================
-const $ = id => document.getElementById(id);
+// Generate 4-char room code (no ambiguous chars)
+function genCode(){
+  const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let s='';
+  for(let i=0;i<4;i++)s+=c[0|Math.random()*c.length];
+  return s;
+}
 
-function isSpecial(c) { return c.isWeather||c.isScorch||c.isDecoy||c.isClear; }
-
-function render() {
-  if (!G) return;
-  const ps = totalScore(G.pBoard, G.weather);
-  const as = totalScore(G.aBoard, G.weather);
-
-  // Status bar
-  $('roundInfo').textContent = t('round') + ' ' + G.round;
-  $('playerWins').textContent = G.pWins;
-  $('aiWins').textContent = G.aWins;
-  const ti = $('turnIndicator');
-  ti.textContent = G.pTurn ? t('your.turn') : t('enemy.turn');
-  ti.style.color = G.pTurn ? 'var(--green-bright)' : 'var(--red)';
-  ti.style.animation = G.pTurn ? 'blink 1.2s ease-in-out infinite' : 'none';
-
-  // AI hand
-  $('aiHandLabel').textContent = t('enemy');
-  $('aiHandCount').textContent = '(' + G.aHand.length + ')';
-  $('aiHandCards').innerHTML = G.aHand.map(() => '<div class="card-back">?</div>').join('');
-
-  // Board
-  const labels = ROW_LABELS();
-  let boardHTML = '';
-  const wIcons = { close:'❄', ranged:'☁', siege:'☂' };
-  const wNames = { close: cname({name:'Frost'}), ranged: cname({name:'Fog'}), siege: cname({name:'Rain'}) };
-
-  for (const r of ROWS) {
-    const prs = calcRow(G.pBoard[r], G.weather[r]);
-    const ars = calcRow(G.aBoard[r], G.weather[r]);
-    const wAct = G.weather[r];
-
-    boardHTML += '<div class="row">';
-    boardHTML += '<div class="row-label">' + labels[r];
-    if (wAct) boardHTML += ' <span style="color:var(--cyan)">' + wIcons[r] + ' ' + wNames[r] + '</span>';
-    boardHTML += '</div>';
-
-    // Player side
-    boardHTML += '<div class="row-side">';
-    boardHTML += '<div class="row-score-label">' + t('you') + ' <b>' + prs + '</b></div>';
-    boardHTML += '<div class="row-cards">';
-    if (G.pBoard[r].length === 0) {
-      boardHTML += '<span class="row-empty">-</span>';
-    } else {
-      for (const c of G.pBoard[r]) {
-        const wEff = c.ability!=='hero' && wAct && !isSpecial(c);
-        const cls = 'board-card' + (wEff ? ' weathered' : '');
-        const stripCls = 'board-strip strip-' + r;
-        boardHTML += '<div class="' + cls + '" title="' + cname(c) + '">';
-        boardHTML += '<div class="' + stripCls + '"></div>';
-        boardHTML += '<div class="power' + (c.ability==='hero'?' hero-power':'') + (wEff?' weather-power':'') + '">' + (wEff?'1':c.power) + '</div>';
-        if (c.ability!=='none') boardHTML += '<div class="ability-sym">' + SYM[c.ability] + '</div>';
-        boardHTML += '</div>';
-      }
-    }
-    boardHTML += '</div></div>';
-
-    // AI side
-    boardHTML += '<div class="row-side">';
-    boardHTML += '<div class="row-score-label">' + t('ai') + ' <b>' + ars + '</b></div>';
-    boardHTML += '<div class="row-cards">';
-    if (G.aBoard[r].length === 0) {
-      boardHTML += '<span class="row-empty">-</span>';
-    } else {
-      for (const c of G.aBoard[r]) {
-        const wEff = c.ability!=='hero' && wAct && !isSpecial(c);
-        const cls = 'board-card' + (wEff ? ' weathered' : '');
-        const stripCls = 'board-strip strip-' + r;
-        boardHTML += '<div class="' + cls + '" title="' + cname(c) + '">';
-        boardHTML += '<div class="' + stripCls + '"></div>';
-        boardHTML += '<div class="power' + (c.ability==='hero'?' hero-power':'') + (wEff?' weather-power':'') + '">' + (wEff?'1':c.power) + '</div>';
-        if (c.ability!=='none') boardHTML += '<div class="ability-sym">' + SYM[c.ability] + '</div>';
-        boardHTML += '</div>';
-      }
-    }
-    boardHTML += '</div></div>';
-    boardHTML += '</div>';
+// ===== ONLINE MENU =====
+function showOnlineMenu(){
+  if(!isFBConfigured()){
+    alert(t('fbNotConfigured'));
+    return;
   }
-  $('board').innerHTML = boardHTML;
+  const $=id=>document.getElementById(id);
+  $('ol-title').textContent=t('olTitle');
+  $('ol-sub').textContent=t('olSub');
+  $('ol-create').textContent=t('olCreate');
+  $('ol-join').textContent=t('olJoin');
+  $('ol-code').placeholder=t('olCode');
+  $('ol-err').textContent='';
+  $('ol-code').value='';
+  showOv('overlay-online-menu');
+}
 
-  // Player hand
-  const canPlay = G.pTurn && !G.pPassed && G.phase==='playing';
-  let handHTML = '';
-  if (G.pHand.length===0 && G.pPassed) {
-    handHTML = '<span style="font-size:11px;color:var(--text-dim);font-style:italic">' + t('pass') + '</span>';
-  } else {
-    for (const c of G.pHand) {
-      const sp = isSpecial(c);
-      let extraClass = canPlay ? 'active' : 'disabled';
-      if (c.ability==='bond') extraClass += ' bond';
-      if (c.ability==='medic') extraClass += ' medic';
-      if (c.ability==='hero') extraClass += ' hero';
-      if (c.ability==='spy') extraClass += ' spy';
-      if (c.isWeather) extraClass += ' weather-card';
-      if (c.isScorch) extraClass += ' scorch-card';
-      if (c.isDecoy) extraClass += ' decoy-card';
-      if (c.isClear) extraClass += ' clear-card';
+function hideOnlineMenu(){
+  hideOv('overlay-online-menu');
+}
 
-      let powerHTML;
-      if (sp) {
-        if (c.isWeather) powerHTML = c.row==='close'?'❄':c.row==='ranged'?'☁':'☂';
-        else if (c.isScorch) powerHTML = '🔥';
-        else if (c.isDecoy) powerHTML = '↩';
-        else if (c.isClear) powerHTML = '☀';
-      } else {
-        powerHTML = c.power;
-      }
-
-      let powerColor = 'var(--green)';
-      if (c.ability==='hero') powerColor = 'var(--amber)';
-      else if (c.ability==='spy') powerColor = 'var(--cyan)';
-      else if (sp) {
-        if (c.isScorch) powerColor = 'var(--red)';
-        else if (c.isWeather) powerColor = 'var(--cyan)';
-        else powerColor = 'var(--amber)';
-      }
-
-      const artClass = getCardArtClass(c);
-      const artIcon = getCardArtIcon(c);
-
-      handHTML += '<div class="hand-card ' + extraClass + '" data-id="' + c.id + '">';
-      handHTML += '<div class="card-art ' + artClass + '">' + artIcon + '</div>';
-      handHTML += '<div class="card-power" style="color:' + powerColor + '">' + powerHTML + '</div>';
-      handHTML += '<div class="card-name">' + cname(c) + '</div>';
-      if (c.ability!=='none' && !sp) handHTML += '<div class="card-ability">' + SYM[c.ability] + '</div>';
-      handHTML += '</div>';
-    }
-  }
-  $('playerHand').innerHTML = handHTML;
-
-  // Wire click events
-  if (canPlay) {
-    document.querySelectorAll('.hand-card.active').forEach(el => {
-      el.addEventListener('click', () => {
-        if (!G.pTurn || G.pPassed) return;
-        const cid = el.dataset.id;
-        playCard(cid, true);
-        checkEnd();
-        render();
-        flash(G.msg);
-        if (G.phase==='playing' && !G.aPassed && !G.pTurn) scheduleAI();
-      });
+function copyCode(){
+  const code=document.getElementById('ow-code').textContent;
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(code).then(()=>{
+      const el=document.getElementById('ow-copy');
+      el.style.display='block';
+      setTimeout(()=>{el.style.display='none';},2000);
     });
   }
+}
 
-  // Scores
-  $('powerLabel').textContent = t('power');
-  $('playerPower').textContent = ps;
-  $('aiPower').textContent = as;
+// ===== CREATE ROOM =====
+async function createOnlineRoom(){
+  const $=id=>document.getElementById(id);
+  $('ol-err').textContent='';
 
-  // Pass button
-  const passBtn = $('btnPass');
-  passBtn.textContent = t('pass');
-  passBtn.disabled = !G.pTurn || G.pPassed;
-  passBtn.style.opacity = (G.pTurn && !G.pPassed) ? '1' : '0.3';
-
-  // Show/hide hamburger
-  $('btnHamburger').style.display = G.phase==='playing'||G.phase==='roundEnd' ? 'flex' : 'none';
-
-  // Round overlay
-  if (G.phase==='roundEnd') {
-    const ro = $('roundOverlay');
-    ro.classList.remove('hidden');
-    $('roundNum').textContent = t('round') + ' ' + G.round;
-    const res = $('roundResult');
-    if (G.lastWinner==='player') { res.textContent = t('round.win'); res.style.color='var(--green-bright)'; }
-    else if (G.lastWinner==='ai') { res.textContent = t('round.lose'); res.style.color='var(--red)'; }
-    else { res.textContent = t('round.draw'); res.style.color='var(--amber)'; }
-    $('roundScore').textContent = ps + ' : ' + as;
-    $('btnContinue').textContent = t('continue');
-    $('btnContinue').style.display = '';
-    $('roundHint').textContent = t('tap.continue');
-    $('roundHint').style.display = '';
-  } else {
-    $('roundOverlay').classList.add('hidden');
+  if(!await initFirebase()){
+    $('ol-err').textContent=t('errNoFB');
+    return;
   }
 
-  // Match end
-  if (G.phase==='matchEnd') {
-    $('matchEnd').classList.remove('hidden');
-    const mr = $('matchResult');
-    if (G.pWins>G.aWins) { mr.textContent = t('win'); mr.style.color='var(--green-bright)'; }
-    else if (G.aWins>G.pWins) { mr.textContent = t('lose'); mr.style.color='var(--red)'; }
-    else { mr.textContent = t('draw'); mr.style.color='var(--amber)'; }
-    $('matchScore').textContent = G.pWins + ' : ' + G.aWins;
-    $('btnPlayAgain').textContent = t('play.again');
-    $('btnBackToMenu').textContent = t('back.menu');
-    $('btnHamburger').style.display = 'none';
-  } else {
-    $('matchEnd').classList.add('hidden');
+  mySide='p1';
+  const code=genCode();
+
+  try{
+    // Check if code exists
+    const snap=await fbDB.ref('rooms/'+code).once('value');
+    if(snap.exists()){await createOnlineRoom();return;}
+
+    // Create room
+    await fbDB.ref('rooms/'+code).set({
+      status:'waiting',
+      created:firebase.database.ServerValue.TIMESTAMP,
+      p1Online:true,
+      p2Online:false
+    });
+
+    fbRoomRef=fbDB.ref('rooms/'+code);
+    onlineRoomCode=code;
+
+    // Set onDisconnect cleanup
+    fbRoomRef.child('p1Online').onDisconnect().set(false);
+    fbRoomRef.child('status').onDisconnect().set('done');
+
+    // Show waiting room
+    hideOv('overlay-online-menu');
+    $('ow-title').textContent=t('owTitle');
+    $('ow-sub').textContent=t('owSub');
+    $('ow-code').textContent=code;
+    $('ow-wait').textContent=t('owWait');
+    $('ow-copy').style.display='none';
+    showOv('overlay-waiting');
+
+    // Listen for opponent joining
+    fbRoomRef.child('p2Online').on('value',function(snap){
+      if(snap.val()===true){
+        // Opponent joined!
+        hideOv('overlay-waiting');
+        startOnlineGame();
+      }
+    });
+
+  }catch(e){
+    console.error('Create room error:',e);
+    $('ol-err').textContent='Error: '+e.message;
   }
 }
 
-function flash(msg) {
-  if (!msg) return;
-  const el = document.createElement('div');
-  el.className = 'msg-flash';
-  el.textContent = msg;
-  document.querySelector('.game').appendChild(el);
-  setTimeout(() => el.remove(), 1200);
-}
+// ===== JOIN ROOM =====
+async function joinOnlineRoom(){
+  const $=id=>document.getElementById(id);
+  const code=$('ol-code').value.trim().toUpperCase();
+  $('ol-err').textContent='';
 
-// ============================================================
-// AI TURN SCHEDULER
-// ============================================================
-let aiTimer = null;
+  if(code.length!==4){
+    $('ol-err').textContent=t('errCodeLen');
+    return;
+  }
 
-function scheduleAI() {
-  clearTimeout(aiTimer);
-  aiTimer = setTimeout(() => {
-    if (G.phase!=='playing' || G.pTurn) return;
+  if(!await initFirebase()){
+    $('ol-err').textContent=t('errNoFB');
+    return;
+  }
 
-    if (G.aHand.length === 0) {
-      doPass(false); checkEnd(); render();
-      flash(G.aPassed ? t('pass') : '');
+  mySide='p2';
+
+  // Show connecting overlay
+  hideOv('overlay-online-menu');
+  $('oc-title').textContent=t('connecting');
+  showOv('overlay-connecting');
+
+  try{
+    const snap=await fbDB.ref('rooms/'+code).once('value');
+
+    hideOv('overlay-connecting');
+
+    if(!snap.exists()){
+      showOnlineMenu();
+      $('ol-err').textContent=t('errRoomNF');
       return;
     }
 
-    if (aiShouldPass()) {
-      doPass(false); checkEnd(); render(); flash(t('enemy.passed')); return;
+    const data=snap.val();
+    if(data.status!=='waiting'||data.p2Online){
+      showOnlineMenu();
+      $('ol-err').textContent=t('errRoomFull');
+      return;
     }
 
-    const cid = aiChoose();
-    if (cid) {
-      playCard(cid, false);
-      checkEnd();
-      // If player already passed, AI keeps playing — don't give turn to player
-      if (G.phase==='playing' && G.pPassed && !G.aPassed) {
-        G.pTurn = false;
-      }
+    // Join room
+    onlineRoomCode=code;
+    fbRoomRef=fbDB.ref('rooms/'+code);
+
+    // Set presence
+    await fbRoomRef.child('p2Online').set(true);
+    await fbRoomRef.child('status').set('playing');
+
+    // onDisconnect
+    fbRoomRef.child('p2Online').onDisconnect().set(false);
+
+    startOnlineGame();
+
+  }catch(e){
+    hideOv('overlay-connecting');
+    showOnlineMenu();
+    $('ol-err').textContent='Error: '+e.message;
+    console.error('Join room error:',e);
+  }
+}
+
+// ===== CANCEL ROOM =====
+function cancelOnlineRoom(){
+  if(fbRoomRef){
+    fbRoomRef.child('p1Online').onDisconnect().cancel();
+    fbRoomRef.child('status').onDisconnect().cancel();
+    fbDB.ref('rooms/'+onlineRoomCode).remove();
+    cleanupOnline();
+  }
+  hideOv('overlay-waiting');
+}
+
+// ===== CLEANUP =====
+function cleanupOnline(){
+  if(fbRoomRef){
+    fbRoomRef.off();
+    if(mySide){
+      fbRoomRef.child(mySide+'Online').onDisconnect().cancel();
+    }
+  }
+  fbRoomRef=null;
+  mySide=null;
+  onlineVer=0;
+  oppHandCount=0;
+  onlineRoomCode='';
+
+  document.getElementById('conn-status').classList.remove('visible','online','offline');
+}
+
+// ===== START ONLINE GAME =====
+function startOnlineGame(){
+  mode='online';
+  newGame();
+  oppHandCount=10;
+
+  // Setup local decks (each player generates their own)
+  G.decks[mySide]=shuffle(mkPlayerDeck().map(cp));
+  // Generate opponent's deck too (for local state tracking, but we won't use it)
+  G.decks[mySide==='p1'?'p2':'p1']=shuffle(mkPlayerDeck().map(c=>Object.assign(cp(c),{id:'q'+c.id}))).map(cp);
+
+  G.names.p1=mySide==='p1'?(lang==='ru'?'ХОЗЯИН':'HOST'):(lang==='ru'?'ГОСТЬ':'GUEST');
+  G.names.p2=mySide==='p2'?(lang==='ru'?'ХОЗЯИН':'HOST'):(lang==='ru'?'ГОСТЬ':'GUEST');
+
+  // Show game screen
+  document.getElementById('menu-screen').style.display='none';
+  document.getElementById('game-screen').style.display='flex';
+
+  // Show connection status
+  const cs=document.getElementById('conn-status');
+  cs.classList.add('visible','online');
+  document.getElementById('conn-text').textContent=t('online');
+
+  if(mySide==='p1'){
+    // Host sets up the full game
+    G.first=Math.random()<.5?'p1':'p2';
+
+    // Draw 10 cards for myself
+    draw(mySide,10);
+
+    // Begin round 1 (field cleared, weather cleared, etc.)
+    G.round=1;
+    G.weather={frost:false,fog:false,rain:false};
+    G.passed={p1:false,p2:false};
+    for(let r of['melee','ranged','siege']){G.field[r].p1=[];G.field[r].p2=[];}
+    G.cur=G.first;
+
+    // Show round start overlay
+    showOv('overlay-round-start');
+    document.getElementById('ors-title').textContent=t('round')+' 1';
+    document.getElementById('ors-sub').textContent=t('rnSub')[1]||'';
+    setTimeout(()=>{
+      hideOv('overlay-round-start');
+      G.phase='playing';
       render();
-      flash(G.msg);
-      // Schedule next AI turn if game continues and AI hasn't passed
-      if (G.phase==='playing' && !G.aPassed) {
-        scheduleAI();
-      }
-    } else {
-      doPass(false); checkEnd(); render(); flash(t('enemy.passed'));
-    }
-  }, 800 + Math.random()*500);
+      syncToFirebase();
+    },1400);
+
+    // Listen for state changes from guest
+    listenForOnlineState();
+
+  } else {
+    // Guest: draw 10 cards and listen for host's state
+    draw(mySide,10);
+    listenForOnlineState();
+  }
 }
 
-// ============================================================
-// ROUND CONTINUE
-// ============================================================
-function continueFromRoundEnd() {
-  if (G.phase === 'roundEnd') {
-    newRound();
-    // Auto-skip empty rounds: if both players have 0 cards, resolve immediately
-    if (G.phase === 'playing' && G.pHand.length === 0 && G.aHand.length === 0) {
-      doPass(true); doPass(false);
-      checkEnd();
-      saveGame();
-      if (G.phase === 'roundEnd') {
-        // Still need another round? Auto-skip again
-        newRound();
-        if (G.phase === 'playing' && G.pHand.length === 0 && G.aHand.length === 0) {
-          doPass(true); doPass(false);
-          checkEnd();
-          saveGame();
+// ===== LISTEN FOR STATE =====
+function listenForOnlineState(){
+  let lastSeenRound=0;
+
+  // State listener
+  fbRoomRef.child('state').on('value',function(snap){
+    const s=snap.val();
+    if(!s)return;
+    if(s._v&&s._v<=onlineVer)return;
+    if(s._v)onlineVer=s._v;
+
+    const prevPhase=G.phase;
+    const prevRound=G.round;
+
+    // Update game state from Firebase
+    G.phase=s.phase||'playing';
+    G.round=s.round||1;
+    G.cur=s.cur||'p1';
+    G.first=s.first||G.first;
+    G.weather=s.weather||{frost:false,fog:false,rain:false};
+    G.field=s.field||{melee:{p1:[],p2:[]},ranged:{p1:[],p2:[]},siege:{p1:[],p2:[]}};
+    G.passed={p1:!!s.passed?.p1,p2:!!s.passed?.p2};
+    G.rw={p1:s.rw?.p1||0,p2:s.rw?.p2||0};
+
+    // Update opponent's hand count
+    const oppSide=mySide==='p1'?'p2':'p1';
+    if(s.counts&&s.counts[oppSide+'Hand']!==undefined){
+      oppHandCount=s.counts[oppSide+'Hand'];
+    }
+
+    // Handle new round (guest draws cards)
+    if(s.round>lastSeenRound&&mySide==='p2'){
+      lastSeenRound=s.round;
+      const dc=s.round===1?10:s.round===2?2:1;
+      draw(mySide,dc);
+      // Update my counts
+      fbRoomRef.child('state/counts').update({});
+      fbRoomRef.child('counts/'+mySide).set({
+        hand:G.hands[mySide].length,
+        deck:G.decks[mySide].length
+      });
+    }
+    if(s.round>lastSeenRound)lastSeenRound=s.round;
+
+    // Handle phase-specific overlays
+    if(s.phase==='roundStart'){
+      showOv('overlay-round-start');
+      document.getElementById('ors-title').textContent=t('round')+' '+s.round;
+      document.getElementById('ors-sub').textContent=(t('rnSub')[s.round])||'';
+      setTimeout(()=>{
+        hideOv('overlay-round-start');
+        render();
+      },1400);
+
+    } else if(s.phase==='roundEnd'){
+      const myPow=totalPow(mySide);
+      const oppPow=totalPow(oppSide);
+      let title,info;
+      if(myPow>oppPow)title=t('rWin');
+      else if(oppPow>myPow)title=t('rLose');
+      else title=t('rDraw');
+      info=totalPow('p1')+' \u2014 '+totalPow('p2');
+
+      render();
+      setTimeout(()=>{
+        showOv('overlay-round-end');
+        document.getElementById('ore-title').textContent=title;
+        document.getElementById('ore-sub').textContent=info+' | '+t('rounds')+': '+G.rw.p1+' \u2014 '+G.rw.p2;
+        // Guest can't advance rounds, hide button
+        if(mySide==='p2'){
+          document.getElementById('btn-next').style.display='none';
+        } else {
+          document.getElementById('btn-next').style.display='';
         }
+      },500);
+
+    } else if(s.phase==='gameEnd'){
+      const myWins=mySide==='p1'?G.rw.p1:G.rw.p2;
+      const oppWins=mySide==='p1'?G.rw.p2:G.rw.p1;
+      let title;
+      if(myWins>oppWins)title=t('gWin');
+      else if(oppWins>myWins)title=t('gLose');
+      else title=t('gDraw');
+      let info=G.rw.p1+' \u2014 '+G.rw.p2;
+      showOv('overlay-game-end');
+      document.getElementById('oge-title').textContent=title;
+      document.getElementById('oge-sub').textContent=info;
+
+    } else {
+      // Normal playing phase - just render
+      hideOv('overlay-round-start');
+      hideOv('overlay-round-end');
+      render();
+    }
+  });
+
+  // Listen for opponent disconnection
+  const oppOnlineKey=mySide==='p1'?'p2Online':'p1Online';
+  fbRoomRef.child(oppOnlineKey).on('value',function(snap){
+    const online=snap.val();
+    const cs=document.getElementById('conn-status');
+    if(mode!=='online')return;
+
+    if(online){
+      cs.classList.remove('offline');
+      cs.classList.add('online');
+      document.getElementById('conn-text').textContent=t('online');
+      hideOv('overlay-disconnect');
+    } else {
+      cs.classList.remove('online');
+      cs.classList.add('offline');
+      document.getElementById('conn-text').textContent=t('offline');
+      if(G&&G.phase==='playing'){
+        document.getElementById('od-title').textContent=t('odTitle');
+        document.getElementById('od-sub').textContent=t('odSub');
+        showOv('overlay-disconnect');
       }
     }
-    render();
-    saveGame();
-    // If AI goes first, schedule AI
-    if (G.phase==='playing' && !G.pTurn) scheduleAI();
-  }
+  });
+
+  // Listen for counts (opponent's hand/deck size)
+  const oppCountsKey=mySide==='p1'?'p2':'p1';
+  fbRoomRef.child('counts/'+oppCountsKey).on('value',function(snap){
+    const c=snap.val();
+    if(c&&c.hand!==undefined){
+      oppHandCount=c.hand;
+      if(G&&G.phase==='playing')render();
+    }
+  });
 }
 
-// ============================================================
-// EVENT HANDLERS
-// ============================================================
-function updateLang() {
-  $('menuDesc').textContent = t('menu.desc');
-  $('btnStart').textContent = t('btn.start');
-  $('btnPass').textContent = t('pass');
-  $('btnPlayAgain').textContent = t('play.again');
-  $('btnBackToMenu').textContent = t('back.menu');
-  $('btnBackToGame').textContent = t('back');
-  $('btnPipboy').textContent = t('exit');
-  if (G && G.phase !== 'menu') render();
+// ===== SYNC STATE TO FIREBASE =====
+function syncToFirebase(){
+  if(!fbRoomRef||!G||mode!=='online')return;
+  onlineVer++;
+
+  const oppSide=mySide==='p1'?'p2':'p1';
+
+  const update={
+    phase:G.phase,
+    round:G.round,
+    cur:G.cur,
+    first:G.first,
+    weather:G.weather,
+    field:G.field,
+    passed:G.passed,
+    rw:G.rw,
+    _v:onlineVer,
+    counts:{
+      p1Hand:G.hands.p1.length,
+      p2Hand:G.hands.p2.length,
+      p1Deck:G.decks.p1.length,
+      p2Deck:G.decks.p2.length
+    }
+  };
+
+  fbRoomRef.child('state').set(update);
+
+  // Also update my hand/deck counts (more reliable for opponent tracking)
+  fbRoomRef.child('counts/'+mySide).set({
+    hand:G.hands[mySide].length,
+    deck:G.decks[mySide].length
+  });
 }
 
-$('btnStart').addEventListener('click', () => {
-  initGame();
-  G.phase = 'playing';
-  $('menuScreen').classList.add('hidden');
-  $('gameScreen').style.display = 'flex';
-  render();
-  flash('');
-  saveGame();
-  // If AI goes first, schedule AI
-  if (G.phase==='playing' && !G.pTurn) scheduleAI();
-});
-
-$('btnPass').addEventListener('click', () => {
-  if (G.phase!=='playing' || !G.pTurn || G.pPassed) return;
-  doPass(true);
-  checkEnd();
-  render();
-  flash(t('pass'));
-  // BUG FIX: If game is still playing and AI hasn't passed and it's AI's turn, schedule AI
-  if (G.phase==='playing' && !G.aPassed && !G.pTurn) scheduleAI();
-});
-
-$('btnContinue').addEventListener('click', (e) => {
-  e.stopPropagation();
-  continueFromRoundEnd();
-});
-
-$('roundOverlay').addEventListener('click', (e) => {
-  if (G.phase === 'roundEnd' && e.target === $('roundOverlay')) {
-    continueFromRoundEnd();
-  }
-});
-
-$('btnPlayAgain').addEventListener('click', () => {
-  initGame();
-  G.phase = 'playing';
-  render();
-  flash('');
-  saveGame();
-  // If AI goes first, schedule AI
-  if (G.phase==='playing' && !G.pTurn) scheduleAI();
-});
-
-$('btnBackToMenu').addEventListener('click', () => {
-  clearTimeout(aiTimer);
-  G.phase = 'menu';
-  $('menuScreen').classList.remove('hidden');
-  $('gameScreen').style.display = 'none';
-  $('matchEnd').classList.add('hidden');
-  $('roundOverlay').classList.add('hidden');
-  saveGame();
-  updateLang();
-});
-
-$('btnHamburger').addEventListener('click', () => {
-  $('settingsPanel').classList.remove('hidden');
-});
-
-$('btnBackToGame').addEventListener('click', () => {
-  $('settingsPanel').classList.add('hidden');
-});
-
-$('btnToggleLang').addEventListener('click', () => {
-  lang = lang === 'ru' ? 'en' : 'ru';
-  localStorage.setItem('scrap-lang', lang);
-  updateLang();
-});
-
-$('btnPipboy').addEventListener('click', () => {
-  clearTimeout(aiTimer);
-  G.phase = 'menu';
-  $('menuScreen').classList.remove('hidden');
-  $('gameScreen').style.display = 'none';
-  $('settingsPanel').classList.add('hidden');
-  $('matchEnd').classList.add('hidden');
-  $('roundOverlay').classList.add('hidden');
-  saveGame();
-  updateLang();
-});
-
-// Player auto-pass when no cards
-setInterval(() => {
-  if (G && G.phase==='playing' && G.pTurn && G.pHand.length===0 && !G.pPassed) {
-    doPass(true);
-    checkEnd();
-    render();
-    flash(t('pass'));
-    // BUG FIX: If game is still playing and AI hasn't passed, schedule AI
-    if (G.phase==='playing' && !G.aPassed && !G.pTurn) scheduleAI();
-  }
-}, 500);
-
-// ============================================================
-// INIT
-// ============================================================
-
-// Try to restore saved game FIRST (before initGame resets everything)
-if (!loadGame()) {
-  // No save found — show menu
-  initGame();
-  updateLang();
+// ===== DISCONNECTED HANDLER =====
+function onlineDisconnected(){
+  cleanupOnline();
+  backToMenu();
 }
+
+// ========== INIT ==========
+newGame();
 </script>
 </body>
 </html>
