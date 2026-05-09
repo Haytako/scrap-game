@@ -174,17 +174,17 @@
 
   .row {
     display: flex; flex-direction: column;
-    padding: 4px 10px;
+    padding: 2px 8px;
     border-bottom: 1px solid rgba(0,80,0,0.3);
     flex-shrink: 0;
   }
   .row-label {
     font-size: 8px; color: var(--text-dim);
-    letter-spacing: 2px; margin-bottom: 3px;
+    letter-spacing: 2px; margin-bottom: 1px;
   }
   .row-side {
-    display: flex; align-items: center; gap: 6px;
-    margin-bottom: 2px;
+    display: flex; align-items: center; gap: 4px;
+    margin-bottom: 1px;
   }
   .row-side:last-child { margin-bottom: 0; }
   .row-score-label {
@@ -205,7 +205,7 @@
 
   /* Board cards (small) */
   .board-card {
-    width: 32px; height: 42px;
+    width: 30px; height: 38px;
     border: 1px solid var(--border-dim);
     background: var(--bg-light);
     display: flex; flex-direction: column;
@@ -1299,10 +1299,14 @@ function scheduleAI() {
     if (cid) {
       playCard(cid, false);
       checkEnd();
+      // If player already passed, AI keeps playing — don't give turn to player
+      if (G.phase==='playing' && G.pPassed && !G.aPassed) {
+        G.pTurn = false;
+      }
       render();
       flash(G.msg);
-      // Schedule next AI turn if game continues and it's still AI's turn
-      if (G.phase==='playing' && !G.pTurn && !G.aPassed) {
+      // Schedule next AI turn if game continues and AI hasn't passed
+      if (G.phase==='playing' && !G.aPassed) {
         scheduleAI();
       }
     } else {
